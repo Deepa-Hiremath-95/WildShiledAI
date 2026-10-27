@@ -4,13 +4,17 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>WildShield AI | Map View</title>
-    <meta name="description" content="Live wildlife intrusion map with zone markers and siren control." />
+    <meta name="description" content="Live wildlife intrusion perimeter map with zone boundary and camera tracking." />
     <link rel="stylesheet" href="styles.css" />
-    <!-- Leaflet -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV/XN2GqAQ=" crossorigin=""></script>
+    <!-- Leaflet with cdnjs fallback -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+      if (typeof L === 'undefined') {
+        document.write('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">');
+        document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"><\/script>');
+      }
+    </script>
   </head>
   <body>
     <div class="app-shell">
@@ -20,25 +24,26 @@
           <section class="glass-card panel-card map-hero-card">
             <div class="card-heading">
               <div>
-                <p class="eyebrow">Interactive perimeter map</p>
-                <h3>Wildlife intrusion path</h3>
+                <p class="eyebrow">Interactive perimeter tracking • Kumily Buffer Zone</p>
+                <h3>Active Zone Map & Conflict Boundary</h3>
               </div>
-              <span class="status-pill danger" id="leafletStatusPill">Loading…</span>
+              <span class="status-pill online" id="leafletStatusPill">Loading zone…</span>
             </div>
 
             <!-- Real Leaflet map -->
             <div id="leafletMap" class="leaflet-map-container" aria-label="Live zone map"></div>
 
-            <!-- Tile error fallback message -->
-            <p class="leaflet-tile-error" id="leafletTileError" style="display:none;">
-              Map tiles unavailable — zone markers are still functional.
-            </p>
+            <!-- Tile or offline error fallback banner with retry -->
+            <div class="leaflet-tile-error" id="leafletTileError" style="display:none;">
+              <span>Map tiles unavailable — vector perimeter boundary and live markers remain active.</span>
+              <button class="btn btn-sm btn-outline" id="mapRetryBtn" style="margin-left: 12px;">Retry tiles</button>
+            </div>
 
             <div class="legend">
-              <span><i class="legend-dot green"></i>Safe zone</span>
-              <span><i class="legend-dot red"></i>At-risk zone</span>
-              <span><i class="legend-dot orange"></i>Animal movement</span>
-              <span><i class="legend-dot blue"></i>Camera</span>
+              <span><i class="legend-dot green"></i>Village center</span>
+              <span><i class="legend-dot red"></i>At-risk perimeter (1.2km)</span>
+              <span><i class="legend-dot orange"></i>Animal detection</span>
+              <span><i class="legend-dot blue"></i>Trail camera station</span>
             </div>
 
             <!-- Hidden compat elements for wireMapMarkers — populated by script.js -->

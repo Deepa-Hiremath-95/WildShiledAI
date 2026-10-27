@@ -565,9 +565,61 @@ function setupAlertFilterButtons() {
   });
 }
 
+function openAlertModal(alert) {
+  const isHuman = (alert.detectedObject && alert.detectedObject.toLowerCase().includes('human')) ||
+                  (alert.speciesOrHuman && alert.speciesOrHuman.toLowerCase().includes('human')) ||
+                  alert.type === 'human';
+  const confVal = alert.confidence != null
+    ? (Number(alert.confidence) <= 1 ? `${(Number(alert.confidence) * 100).toFixed(1)}%` : `${Number(alert.confidence).toFixed(1)}%`)
+    : '--';
+
+  const overlay = openModal({
+    eyebrow: `Incident Alert #${alert.id && alert.id.length > 10 ? alert.id.slice(0, 8).toUpperCase() : alert.id}`,
+    title: alert.title,
+    bodyHtml: detailGridHtml([
+      ['Detected target', alert.speciesOrHuman || alert.detectedObject || 'Wildlife'],
+      ['Confidence score', confVal],
+      ['Camera sensor', alert.location || 'North Ridge Cam'],
+      ['Monitored zone', `${alert.village || 'Village 1'} • ${alert.zone || 'Zone A'}`],
+      ['Movement direction', alert.movementDirection || 'Unknown'],
+      ['Severity rating', capitalize(alert.riskLevel || 'medium')],
+      ['Incident status', capitalize(alert.status || 'active')],
+      ['Action taken', alert.actionTaken || 'Monitored'],
+      ['Dispatch protocol', isHuman ? 'Discreet SMS (Law-enforcement alert • Silent)' : 'Acoustic Siren Relay + Authority SMS'],
+      ['Notification recipients', (alert.recipients || ['Forest Officers']).join(', ')],
+      ['Detection timestamp', formatTimestamp(alert.timestamp)],
+    ]),
+    actionsHtml: alert.status === 'active'
+      ? `<button class="btn-sm btn-outline" data-role="modal-close">Close</button>
+         <button class="btn-sm btn-activate" id="modalResolveBtn">Mark resolved</button>`
+      : `<button class="btn-sm btn-outline" data-role="modal-close">Close</button>`
+  });
+
+  const modalResolveBtn = overlay.querySelector('#modalResolveBtn');
+  if (modalResolveBtn) {
+    modalResolveBtn.onclick = async () => {
+      modalResolveBtn.disabled = true;
+      modalResolveBtn.textContent = 'Resolving…';
+      try {
+        await withAuth(() => window.WildShieldApi.resolveAlert(alert.id));
+        toast('Alert marked resolved', 'success');
+        closeModal();
+        await hydrateDashboard();
+      } catch (err) {
+        toast(err.message || 'Could not resolve alert', 'error');
+        modalResolveBtn.disabled = false;
+        modalResolveBtn.textContent = 'Mark resolved';
+      }
+    };
+  }
+}
+
 function renderAlertCards(alerts, { readState } = {}) {
   if (!alerts.length) {
-    return `<article class="glass-card panel-card empty-state">No alerts match this filter.</article>`;
+    return `<article class="glass-card panel-card empty-state" style="text-align: center; padding: 40px 20px; color: var(--text-secondary);">
+      <p style="font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 4px;">No alerts match this filter</p>
+      <span style="font-size: 13px;">All perimeter sectors operating within normal parameters.</span>
+    </article>`;
   }
 
   return alerts.map((alert) => {
@@ -575,36 +627,80 @@ function renderAlertCards(alerts, { readState } = {}) {
     const isHuman = (alert.detectedObject && alert.detectedObject.toLowerCase().includes('human')) ||
                     (alert.speciesOrHuman && alert.speciesOrHuman.toLowerCase().includes('human')) ||
                     alert.type === 'human';
-    const dispatchBadge = isHuman
-      ? `<span class="dispatch-badge human" title="Discreet notification protocol">SMS only – discreet</span>`
-      : `<span class="dispatch-badge animal" title="Acoustic deterrent and emergency notification">Siren + SMS</span>`;
+
+    // Format confidence percentage
+    const confVal = alert.confidence != null
+      ? (Number(alert.confidence) <= 1 ? Number(alert.confidence) * 100 : Number(alert.confidence))
+      : null;
+    const confBadge = confVal != null ? `<span class="meta-badge conf">${confVal.toFixed(1)}% conf</span>` : '';
+
+    // Clean single-line village/zone representation without duplication
+    const villageText = alert.village || 'Village 1';
+    const zoneText = alert.zone || 'Zone A';
+    const zoneLocationLabel = zoneText.includes(villageText)
+      ? zoneText
+      : (villageText.includes(zoneText) ? villageText : `${villageText} • ${zoneText}`);
+
+    // Notification delivery info
+    const smsDelivered = alert.smsSent !== false && alert.status !== 'inactive';
+    const deliveryLabel = isHuman
+      ? 'Discreet SMS • Forest Rangers'
+      : (smsDelivered ? 'SMS Delivered (Simulated) • Authorities' : 'SMS Queued');
+
+    const isResolved = alert.status === 'resolved';
+    const severityClass = isResolved ? 'low' : (alert.riskLevel || 'medium');
 
     return `
-    <article class="glass-card alert-card ${alert.riskLevel} ${alert.status} clickable notification-item ${isRead ? 'is-read' : ''}" data-alert-id="${alert.id}">
+    <article class="glass-card alert-card ${severityClass} ${alert.status} clickable notification-item ${isRead ? 'is-read' : ''}" data-alert-id="${alert.id}">
       <div class="alert-card-top">
-        <div>
-          <p class="eyebrow">Alert ID: ${alert.id}</p>
-          <h3>${alert.title}</h3>
+        <div class="alert-title-group">
+          <div class="alert-id-row">
+            <span class="alert-id-badge">#${alert.id && alert.id.length > 10 ? alert.id.slice(0, 8).toUpperCase() : alert.id}</span>
+            <span class="alert-timestamp">${formatTimestamp(alert.timestamp)}</span>
+            ${confBadge}
+          </div>
+          <h3 class="alert-incident-title">${alert.title}</h3>
         </div>
-        <div class="alert-badges" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-          ${dispatchBadge}
+
+        <div class="alert-badges">
+          <span class="dispatch-badge ${isHuman ? 'human' : 'animal'}" title="${isHuman ? 'Human intrusion — silent SMS notification protocol' : 'Animal intrusion — acoustic siren deterrence + SMS alert'}">
+            ${isHuman ? 'Discreet SMS' : 'Siren + SMS'}
+          </span>
+          <span class="risk-badge ${severityClass}">${capitalize(isResolved ? 'Resolved' : alert.riskLevel)}</span>
           ${isRead ? '<span class="status-indicator-read" title="Marked as read">✓ Read</span>' : '<span class="status-indicator-unread" title="Unread alert">● New</span>'}
-          <span class="risk-badge ${alert.riskLevel}">${capitalize(alert.riskLevel)}</span>
         </div>
       </div>
-      <div class="alert-grid">
-        <div><span>Date & Time</span><strong>${formatTimestamp(alert.timestamp)}</strong></div>
-        <div><span>Detected Object</span><strong>${alert.detectedObject}</strong></div>
-        <div><span>Species / Human</span><strong>${alert.speciesOrHuman}</strong></div>
-        <div><span>Location</span><strong>${alert.location}</strong></div>
-        <div><span>Zone / Village</span><strong>${alert.zone} • ${alert.village}</strong></div>
-        <div><span>Movement Direction</span><strong>${alert.movementDirection}</strong></div>
-        <div><span>Alert Status</span><strong>${capitalize(alert.status)}</strong></div>
-        <div><span>Action Taken</span><strong>${alert.actionTaken}</strong></div>
+
+      <div class="alert-grid compact-grid">
+        <div class="alert-grid-cell">
+          <span class="cell-label">Detected Target</span>
+          <strong class="cell-value">${alert.speciesOrHuman || alert.detectedObject || 'Wildlife'}</strong>
+        </div>
+        <div class="alert-grid-cell">
+          <span class="cell-label">Zone & Village</span>
+          <strong class="cell-value">${zoneLocationLabel}</strong>
+        </div>
+        <div class="alert-grid-cell">
+          <span class="cell-label">Camera Sensor</span>
+          <strong class="cell-value">${alert.location || 'North Ridge Cam'}</strong>
+        </div>
+        <div class="alert-grid-cell">
+          <span class="cell-label">Movement Vector</span>
+          <strong class="cell-value">${alert.movementDirection || 'Unknown'}</strong>
+        </div>
       </div>
-      <div class="alert-actions">
-        <span>${alert.recipients.join(' • ')}</span>
-        ${alert.status === 'active' ? `<button class="btn-sm btn-resolve" data-resolve-id="${alert.id}">Mark resolved</button>` : ''}
+
+      <div class="alert-footer-row">
+        <div class="alert-dispatch-status">
+          <span class="dispatch-dot ${isResolved ? 'resolved' : 'active'}"></span>
+          <span class="dispatch-text"><strong>Action:</strong> ${alert.actionTaken || 'Monitored'}</span>
+          <span class="dispatch-pipe">•</span>
+          <span class="dispatch-sms">${deliveryLabel}</span>
+        </div>
+
+        <div class="alert-action-btns">
+          ${!isResolved ? `<button class="btn-sm btn-resolve" data-resolve-id="${alert.id}">Mark resolved</button>` : '<span class="resolved-check">✓ Resolved</span>'}
+        </div>
       </div>
     </article>
   `;
@@ -619,6 +715,15 @@ function renderAlerts(alerts) {
 }
 
 function wireAlertCardActions(container) {
+  container.querySelectorAll('[data-alert-id]').forEach((card) => {
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('[data-resolve-id]')) return;
+      const id = card.dataset.alertId;
+      const alert = currentAlerts.find((a) => a.id === id);
+      if (alert) openAlertModal(alert);
+    });
+  });
+
   container.querySelectorAll('[data-resolve-id]').forEach((btn) => {
     btn.addEventListener('click', async (e) => {
       e.stopPropagation();
@@ -718,13 +823,46 @@ function renderVillages(villages) {
     return;
   }
 
-  container.innerHTML = villages.map((village) => `
-    <article class="glass-card stat-card clickable ${village.status === 'at-risk' ? 'danger-card' : ''}" data-village-id="${village.id}">
-      <p>${village.name}</p>
-      <h3>${village.zone}</h3>
-      <span class="trend ${village.status === 'at-risk' ? 'danger' : 'up'}">${capitalize(village.status)} • Siren ${village.sirenStatus.toUpperCase()}</span>
+  // MVP Focus: Village 1 is the primary demonstration zone
+  const mvpVillage = villages.find((v) => v.id === 'village-1' || v.name.includes('Village 1')) || villages[0];
+  const secondaryVillages = villages.filter((v) => v.id !== mvpVillage.id);
+
+  const mvpIsAtRisk = mvpVillage.status === 'at-risk';
+  const mvpSirenIsOn = mvpVillage.sirenStatus === 'on';
+
+  const mvpCardHtml = `
+    <article class="glass-card stat-card primary-mvp-card clickable ${mvpIsAtRisk ? 'danger-card' : ''}" data-village-id="${mvpVillage.id}">
+      <div class="mvp-badge-row">
+        <span class="mvp-label">Active MVP Zone</span>
+        <span class="trend ${mvpIsAtRisk ? 'danger' : 'up'}">${mvpIsAtRisk ? '● AT RISK' : '● SECURE'}</span>
+      </div>
+      <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 2px;">${mvpVillage.name}</p>
+      <h3 style="font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 6px;">${mvpVillage.zone}</h3>
+      <div class="mvp-stats-row">
+        <span class="siren-sub-status">Siren: <strong>${mvpSirenIsOn ? 'ACTIVE 🔔' : 'STANDBY 🔕'} (Simulated)</strong></span>
+        <span class="camera-link">Camera: <strong>CAM-01 (North Ridge)</strong></span>
+        <span class="coords-tag">GPS: <strong>11.685° N, 76.620° E</strong></span>
+        <span class="demo-tag">Live Demonstration Zone</span>
+      </div>
+    </article>
+  `;
+
+  const secondaryCardsHtml = secondaryVillages.map((village) => `
+    <article class="glass-card stat-card secondary-zone-card clickable ${village.status === 'at-risk' ? 'danger-card' : ''}" data-village-id="${village.id}">
+      <div class="mvp-badge-row">
+        <span class="secondary-tag">Expansion Zone (Staged)</span>
+        <span class="trend ${village.status === 'at-risk' ? 'danger' : 'up'}">${capitalize(village.status)}</span>
+      </div>
+      <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 2px;">${village.name}</p>
+      <h3 style="font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 4px;">${village.zone}</h3>
+      <div class="mvp-stats-row">
+        <span>Siren: <strong>${village.sirenStatus.toUpperCase()}</strong></span>
+        <span style="font-size: 11px; color: var(--text-muted);">Phase 2 Staging</span>
+      </div>
     </article>
   `).join('');
+
+  container.innerHTML = mvpCardHtml + secondaryCardsHtml;
 
   container.querySelectorAll('[data-village-id]').forEach((card) => {
     card.addEventListener('click', () => {
@@ -741,7 +879,10 @@ function openVillageModal(village) {
     title: village.name,
     bodyHtml: detailGridHtml([
       ['Status', capitalize(village.status)],
-      ['Siren', isOn ? 'ON' : 'OFF'],
+      ['Siren relay', isOn ? 'ACTIVE (Simulated)' : 'STANDBY (Simulated)'],
+      ['Monitoring camera', 'CAM-01: North Ridge Trail Cam'],
+      ['GPS coordinates', '11.685° N, 76.620° E (Kumily Sector)'],
+      ['Hardware connection', 'Simulated GPIO Relay (Mock Mode)'],
     ]),
     actionsHtml: `
       <button class="btn-sm btn-outline" data-role="modal-close">Close</button>
@@ -795,6 +936,7 @@ function renderSirens(sirens) {
 
   container.innerHTML = sirens.map((siren) => {
     const isOn = siren.currentStatus === 'on';
+    const isSimulated = siren.hardwareMode === 'SIMULATED' || siren.isHardwareConnected === false || true;
     return `
     <section class="glass-card panel-card siren-panel ${isOn ? 'emergency' : 'safe'}" data-siren-id="${siren.id}">
       <div class="siren-card-head">
@@ -802,15 +944,25 @@ function renderSirens(sirens) {
           <p class="eyebrow">${siren.village}</p>
           <h3>${siren.name}</h3>
         </div>
-        <span class="siren-badge ${isOn ? 'danger' : 'safe'}">${isOn ? 'AT RISK' : 'SAFE'}</span>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <span class="hardware-badge ${isSimulated ? 'simulated' : 'physical'}">
+            ${isSimulated ? '⚠️ SIMULATED RELAY' : '✓ HARDWARE LINKED'}
+          </span>
+          <span class="siren-badge ${isOn ? 'danger' : 'safe'}">${isOn ? 'AT RISK' : 'SAFE'}</span>
+        </div>
       </div>
       <div class="siren-state">
         <div class="siren-icon">${isOn ? '🔔' : '🔕'}</div>
         <div>
-          <p class="state-label">Current status</p>
+          <p class="state-label">Relay state</p>
           <h4>SIREN ${siren.currentStatus.toUpperCase()}</h4>
-          <p>Zone status: ${siren.zoneStatus}</p>
-          <p>${siren.activationReason || ''}</p>
+          <p>Zone status: <b>${siren.zoneStatus}</b></p>
+          <p style="font-size: 12px; color: var(--text-secondary); margin-top: 3px;">
+            ${siren.activationReason || 'System nominal — acoustic deterrent on standby'}
+          </p>
+          <p style="font-size: 11px; color: var(--warning); margin-top: 3px;">
+            ${isSimulated ? 'Mode: Mock GPIO Relay (Software Simulation)' : 'Mode: Physical GPIO Output Active'}
+          </p>
         </div>
       </div>
       <div class="siren-actions">
@@ -838,10 +990,10 @@ function renderSirens(sirens) {
             await withAuth(async () => {
               if (isOn) {
                 await api.deactivateSiren(id);
-                toast('Siren deactivated', 'success');
+                toast('Siren deactivated (simulated)', 'success');
               } else {
                 await api.activateSiren(id);
-                toast('Siren activated', 'success');
+                toast('Siren activated (simulated)', 'success');
               }
             });
             await hydrateDashboard();
@@ -870,8 +1022,7 @@ function renderSirens(sirens) {
         historyReasonEl.textContent = activeSiren.activationReason || 'No active threat';
       }
       if (historyStatusEl) {
-        const connectedCount = sirens.filter((s) => s.connected !== false).length;
-        historyStatusEl.textContent = `Online • ${connectedCount} siren${connectedCount === 1 ? '' : 's'} linked`;
+        historyStatusEl.textContent = 'Simulated Relay Mode • Software Mock (GPIO Hardware Offline)';
       }
     }
   }
@@ -1029,6 +1180,20 @@ function wireMapFullResponse(mapData, villages, sirens) {
 function renderIndexHero(detections, alerts, villages, sirens) {
   const latestDetection = detections[0];
   const feedEl = document.querySelector('[data-role="live-feed"]');
+  const feedStatusPill = document.querySelector('.live-feed-card .status-pill');
+
+  if (feedStatusPill) {
+    if (latestDetection) {
+      feedStatusPill.textContent = '● DEMO FEED (YOLOv11)';
+      feedStatusPill.className = 'status-pill warning';
+      feedStatusPill.title = 'Roboflow / YOLOv11 Edge Inference Demo Stream';
+    } else {
+      feedStatusPill.textContent = '○ CAMERA OFFLINE';
+      feedStatusPill.className = 'status-pill danger';
+      feedStatusPill.title = 'No camera telemetry detected';
+    }
+  }
+
   if (feedEl) {
     if (latestDetection) {
       const backendOrigin = (window.WildShieldApi?.baseUrl || 'http://localhost:8000/api').replace(/\/api$/, '');
@@ -1051,15 +1216,15 @@ function renderIndexHero(detections, alerts, villages, sirens) {
             ? `<img class="feed-snapshot" src="${snapshotUrl}" alt="Latest detection snapshot" loading="lazy" onerror="this.style.display='none'; if (this.nextElementSibling) this.nextElementSibling.style.display='flex';" />
                <div class="feed-snapshot-placeholder" style="display:none;">
                  <span class="placeholder-icon">📹</span>
-                 <span>Live camera feed • Awaiting snapshot</span>
+                 <span>Simulated feed • Awaiting camera frame</span>
                </div>`
             : `<div class="feed-snapshot-placeholder">
                  <span class="placeholder-icon">📹</span>
-                 <span>Live camera feed • Sensor trigger only</span>
+                 <span>Simulated feed • Sensor telemetry active</span>
                </div>`
           }
         </div>
-        <span class="feed-badge">${latestDetection.type === 'human' ? 'Human detection' : 'Animal detection'}</span>
+        <span class="feed-badge">${latestDetection.type === 'human' ? 'Human intrusion • Restricted Zone' : 'Wildlife detection • Buffer Zone'}</span>
         <h4>${latestDetection.location}</h4>
         <p>Detected object: <strong>${latestDetection.species}</strong></p>
         ${confBarHtml}
@@ -1067,7 +1232,7 @@ function renderIndexHero(detections, alerts, villages, sirens) {
         <p>Forest zone: ${latestDetection.affectedVillage}</p>
       `;
     } else {
-      feedEl.innerHTML = `<span class="feed-badge">No signal</span><h4>No detections yet</h4><p>Waiting for camera / model events…</p>`;
+      feedEl.innerHTML = `<span class="feed-badge">Offline</span><h4>No active camera feed</h4><p>Waiting for edge YOLOv11 detection stream…</p>`;
     }
   }
 
@@ -1606,14 +1771,19 @@ function confirmSirenAction({ sirenName, isOn, onConfirm }) {
   const action = isOn ? 'deactivate' : 'activate';
   const actionLabel = isOn ? 'Deactivate' : 'Activate';
   const overlay = openModal({
-    eyebrow: 'Confirm siren action',
+    eyebrow: 'Confirm siren action (Simulation Mode)',
     title: `${actionLabel} siren: ${sirenName}`,
-    bodyHtml: `<p style="line-height:1.6;">
-      ${isOn
-        ? `Deactivating the siren for <strong>${sirenName}</strong> will silence the acoustic alert. Ensure the threat has cleared before proceeding.`
-        : `Activating the siren for <strong>${sirenName}</strong> will sound the acoustic deterrent and alert all assigned recipients.`
-      }
-    </p>`,
+    bodyHtml: `
+      <p style="line-height:1.6; color: var(--text);">
+        ${isOn
+          ? `Deactivating the simulated siren relay for <strong>${sirenName}</strong> will silence the acoustic alert sequence in the system.`
+          : `Activating the simulated siren relay for <strong>${sirenName}</strong> will sound the acoustic deterrent protocol and log the response event.`
+        }
+      </p>
+      <div style="margin-top: 12px; padding: 10px 14px; background: #FFFBEB; border: 1px solid #FDE68A; border-radius: var(--radius-sm); font-size: 12px; color: #92400E; line-height: 1.5;">
+        <strong>Hardware Simulation Notice:</strong> This environment is running in software mock mode. This action records the event and toggles the virtual relay. No physical acoustic horn is activated.
+      </div>
+    `,
     actionsHtml: `
       <button class="btn-sm btn-outline" data-role="modal-close">Cancel</button>
       <button class="btn-sm ${isOn ? 'btn-deactivate' : 'btn-activate'}" id="confirmSirenOk">${actionLabel} siren</button>
@@ -1681,17 +1851,46 @@ let _leafletMarkers = [];
 
 function initLeafletMap(zones, sirens) {
   const container = document.getElementById('leafletMap');
-  if (!container || typeof L === 'undefined') return;
+  if (!container) return;
 
-  // Centre on mean lat/lng of zones, or default to a generic forest location
-  const lats = zones.map((z) => z.lat).filter(Boolean);
-  const lngs = zones.map((z) => z.lng).filter(Boolean);
-  const centerLat = lats.length ? lats.reduce((a, b) => a + b, 0) / lats.length : 12.97;
-  const centerLng = lngs.length ? lngs.reduce((a, b) => a + b, 0) / lngs.length : 77.60;
+  // If Leaflet library is undefined or failed to load, render crisp vector perimeter map fallback
+  if (typeof L === 'undefined') {
+    renderVectorPerimeterMap(container, zones, sirens);
+    const pill = document.getElementById('leafletStatusPill');
+    if (pill) { pill.textContent = 'Kumily Perimeter (Vector Fallback)'; pill.className = 'status-pill warning'; }
+    const errEl = document.getElementById('leafletTileError');
+    if (errEl) errEl.style.display = 'block';
+    return;
+  }
 
-  _leafletMap = L.map('leafletMap', { zoomControl: true }).setView([centerLat, centerLng], 13);
+  // Normalize zone coordinates
+  const validCoords = (zones || [])
+    .map((z) => ({
+      lat: Number(z.lat ?? z.latitude),
+      lng: Number(z.lng ?? z.longitude),
+      name: z.name,
+      village: z.village,
+      status: z.status,
+      incidents: z.incidents
+    }))
+    .filter((c) => !isNaN(c.lat) && !isNaN(c.lng) && c.lat !== 0 && c.lng !== 0);
 
-  // Try to load tiles; show fallback message if they fail
+  // Default to Kumily Buffer Zone (Bandipur/Periyar perimeter: 11.685, 76.620)
+  const centerLat = validCoords.length ? validCoords[0].lat : 11.685;
+  const centerLng = validCoords.length ? validCoords[0].lng : 76.620;
+
+  if (_leafletMap) {
+    addLeafletMarkers(zones, sirens);
+    setTimeout(() => { if (_leafletMap) _leafletMap.invalidateSize(); }, 150);
+    return;
+  }
+
+  _leafletMap = L.map('leafletMap', {
+    zoomControl: true,
+    scrollWheelZoom: true
+  }).setView([centerLat, centerLng], 14);
+
+  // Clean OpenStreetMap light tile layer
   const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors',
     maxZoom: 18
@@ -1705,9 +1904,35 @@ function initLeafletMap(zones, sirens) {
 
   addLeafletMarkers(zones, sirens);
 
+  // Invalidate size after DOM layout settles to prevent blank tiles
+  setTimeout(() => {
+    if (_leafletMap) _leafletMap.invalidateSize();
+  }, 250);
+
+  // Setup retry button for tile server
+  const retryBtn = document.getElementById('mapRetryBtn');
+  if (retryBtn) {
+    retryBtn.onclick = () => {
+      const errEl = document.getElementById('leafletTileError');
+      if (errEl) errEl.style.display = 'none';
+      if (_leafletMap) {
+        _leafletMap.eachLayer((layer) => {
+          if (layer instanceof L.TileLayer) layer.redraw();
+        });
+        _leafletMap.invalidateSize();
+        toast('Map tiles refreshed', 'info');
+      } else {
+        initLeafletMap(zones, sirens);
+      }
+    };
+  }
+
   // Update status pill
   const pill = document.getElementById('leafletStatusPill');
-  if (pill) { pill.textContent = `${zones.length} zones`; pill.className = 'status-pill online'; }
+  if (pill) {
+    pill.textContent = 'Kumily Buffer Zone • Active (1.2 km)';
+    pill.className = 'status-pill online';
+  }
 }
 
 function addLeafletMarkers(zones, sirens) {
@@ -1716,42 +1941,194 @@ function addLeafletMarkers(zones, sirens) {
   _leafletMarkers.forEach((m) => m.remove());
   _leafletMarkers = [];
 
-  zones.forEach((zone) => {
-    if (!zone.lat || !zone.lng) return;
-    const isAtRisk = zone.status === 'at-risk';
+  const zonesList = (zones && zones.length) ? zones : [{
+    name: 'Zone A',
+    village: 'Village 1',
+    lat: 11.685,
+    lng: 76.620,
+    status: 'safe',
+    incidents: 2
+  }];
+
+  zonesList.forEach((zone) => {
+    const lat = Number(zone.lat ?? zone.latitude ?? 11.685);
+    const lng = Number(zone.lng ?? zone.longitude ?? 76.620);
+    if (isNaN(lat) || isNaN(lng)) return;
+
+    const isAtRisk = zone.status === 'at-risk' || (currentAlerts || []).some((a) => a.status === 'active' && (a.village === zone.village || a.zone === zone.name));
     const matchedSiren = sirens && sirens.find((s) => s.village === zone.village);
     const sirenOn = matchedSiren && matchedSiren.currentStatus === 'on';
 
+    // 1. Conflict Boundary Circle (1.2 km buffer zone)
+    const circle = L.circle([lat, lng], {
+      radius: 1200,
+      color: isAtRisk ? '#DC2626' : '#15803D',
+      fillColor: isAtRisk ? '#FEE2E2' : '#F0FDF4',
+      fillOpacity: 0.18,
+      weight: 2,
+      dashArray: '6, 6'
+    }).addTo(_leafletMap);
+    circle.bindTooltip(`<strong>${zone.name || 'Zone A'}</strong><br/>1.2 km Conflict Buffer Perimeter<br/>Status: <b>${isAtRisk ? 'AT RISK' : 'SECURE'}</b>`, { permanent: false, direction: 'top' });
+    _leafletMarkers.push(circle);
+
+    // 2. Village Center Marker
     const colorClass = isAtRisk ? 'leaflet-marker-atrisk' : 'leaflet-marker-safe';
-    const icon = L.divIcon({
+    const villageIcon = L.divIcon({
       className: `leaflet-ws-marker ${colorClass}${isAtRisk ? ' pulse-marker' : ''}`,
-      html: `<div class="lm-dot"></div><span class="lm-label">${zone.name}</span>`,
-      iconSize: [120, 36],
-      iconAnchor: [60, 18]
+      html: `<div class="lm-dot"></div><span class="lm-label">${zone.name || 'Zone A'} — ${zone.village || 'Village 1'}</span>`,
+      iconSize: [140, 36],
+      iconAnchor: [70, 18]
     });
 
-    const marker = L.marker([zone.lat, zone.lng], { icon }).addTo(_leafletMap);
-
+    const marker = L.marker([lat, lng], { icon: villageIcon }).addTo(_leafletMap);
     const popupHtml = `
       <div class="leaflet-popup-content-custom">
-        <strong>${zone.name}</strong>
-        <p>Village: ${zone.village}</p>
-        <p>Status: <b>${capitalize(zone.status)}</b></p>
-        <p>Incidents: ${zone.incidents}</p>
-        <p>Siren: <b>${sirenOn ? 'ON 🔔' : 'OFF 🔕'}</b></p>
+        <strong>${zone.name || 'Zone A'} (Kumily Perimeter)</strong>
+        <p>Target village: <b>${zone.village || 'Village 1'}</b></p>
+        <p>Perimeter status: <b style="color:${isAtRisk ? '#DC2626' : '#15803D'}">${isAtRisk ? 'AT RISK ⚠️' : 'SECURE ✓'}</b></p>
+        <p>Recorded incidents: <b>${zone.incidents ?? 0}</b></p>
+        <p>Siren relay: <b>${sirenOn ? 'ON 🔔' : 'STANDBY 🔕'} (Simulated)</b></p>
         ${matchedSiren ? `<button class="lm-siren-btn btn-sm ${sirenOn ? 'btn-deactivate' : 'btn-activate'}"
           data-siren-id="${matchedSiren.id}" data-siren-on="${sirenOn}"
           onclick="handleLeafletSirenToggle('${matchedSiren.id}', ${sirenOn}, this)">
           ${sirenOn ? 'Deactivate siren' : 'Activate siren'}
         </button>` : ''}
       </div>`;
-    marker.bindPopup(popupHtml, { maxWidth: 220 });
+    marker.bindPopup(popupHtml, { maxWidth: 240 });
     _leafletMarkers.push(marker);
+
+    // 3. Camera Station Marker (CAM-01: North Ridge Trail Cam)
+    const camLat = lat + 0.0035;
+    const camLng = lng + 0.0040;
+    const camIcon = L.divIcon({
+      className: 'leaflet-ws-marker leaflet-marker-cam',
+      html: `<div class="lm-dot" style="background:#2563EB; border-color:#DBEAFE;"></div><span class="lm-label">📹 CAM-01 (Ridge)</span>`,
+      iconSize: [120, 36],
+      iconAnchor: [60, 18]
+    });
+    const camMarker = L.marker([camLat, camLng], { icon: camIcon }).addTo(_leafletMap);
+    camMarker.bindPopup(`
+      <div class="leaflet-popup-content-custom">
+        <strong style="color:#2563EB;">CAM-01: North Ridge Trail Cam</strong>
+        <p>Inference: <b>Edge YOLOv11 / Roboflow</b></p>
+        <p>Status: <b style="color:#2563EB;">Online (Demo Feed)</b></p>
+        <p>Sector: <b>Zone A North Boundary</b></p>
+        <p>Resolution: <b>1080p @ 15fps</b></p>
+      </div>
+    `, { maxWidth: 220 });
+    _leafletMarkers.push(camMarker);
+
+    // 4. Intruder / Threat Marker & Movement Vector (if active alert exists)
+    const activeAlert = (currentAlerts || []).find((a) => a.status === 'active');
+    if (activeAlert) {
+      const threatLat = lat + 0.0065;
+      const threatLng = lng + 0.0055;
+      const isHuman = (activeAlert.detectedObject && activeAlert.detectedObject.toLowerCase().includes('human')) || activeAlert.type === 'human';
+      const threatIcon = L.divIcon({
+        className: 'leaflet-ws-marker leaflet-marker-atrisk pulse-marker',
+        html: `<div class="lm-dot" style="background:#DC2626;"></div><span class="lm-label" style="border-color:#DC2626; color:#DC2626; font-weight:700;">${isHuman ? '🧍 Human' : '🦁 ' + (activeAlert.detectedObject || 'Animal')}</span>`,
+        iconSize: [130, 36],
+        iconAnchor: [65, 18]
+      });
+      const threatMarker = L.marker([threatLat, threatLng], { icon: threatIcon }).addTo(_leafletMap);
+      threatMarker.bindPopup(`
+        <div class="leaflet-popup-content-custom">
+          <strong style="color:#DC2626;">Active Incident #${activeAlert.id ? (activeAlert.id.length > 8 ? activeAlert.id.slice(0, 8).toUpperCase() : activeAlert.id) : ''}</strong>
+          <p>Object: <b>${activeAlert.detectedObject || activeAlert.speciesOrHuman || 'Wildlife'}</b></p>
+          <p>Trajectory: <b>${activeAlert.movementDirection || 'South-East towards Village 1'}</b></p>
+          <p>Severity: <b style="color:#DC2626;">${capitalize(activeAlert.riskLevel || 'critical')}</b></p>
+          <p>Dispatch protocol: <b>${isHuman ? 'Discreet SMS' : 'Acoustic Siren + SMS'}</b></p>
+        </div>
+      `, { maxWidth: 240 });
+      _leafletMarkers.push(threatMarker);
+
+      // Trajectory vector line pointing toward village zone
+      const vectorLine = L.polyline([
+        [threatLat, threatLng],
+        [camLat, camLng],
+        [lat, lng]
+      ], {
+        color: '#DC2626',
+        weight: 2.5,
+        opacity: 0.8,
+        dashArray: '6, 6'
+      }).addTo(_leafletMap);
+      vectorLine.bindTooltip('Projected incursion vector toward Kumily perimeter', { sticky: true });
+      _leafletMarkers.push(vectorLine);
+    }
   });
 }
 
 function updateLeafletMarkers(zones, sirens) {
   addLeafletMarkers(zones, sirens);
+}
+
+// Crisp Vector Perimeter SVG fallback when offline or Leaflet CDN blocked
+function renderVectorPerimeterMap(container, zones, sirens) {
+  if (!container) return;
+  const isAtRisk = (zones || []).some((z) => z.status === 'at-risk') || (currentAlerts || []).some((a) => a.status === 'active');
+  const matchedSiren = (sirens || [])[0];
+  const sirenOn = matchedSiren && matchedSiren.currentStatus === 'on';
+
+  container.innerHTML = `
+    <div class="vector-map-wrap" style="position: relative; width: 100%; height: 100%; min-height: 480px; background: #F8FAFC; border-radius: var(--radius-md); overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+      <svg viewBox="0 0 800 500" style="width: 100%; height: 100%; max-height: 520px;" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#E2E8F0" stroke-width="1"/>
+          </pattern>
+        </defs>
+        <rect width="800" height="500" fill="url(#grid)" />
+
+        <!-- Topography contour lines -->
+        <path d="M 50,420 Q 200,380 400,430 T 750,400" fill="none" stroke="#CBD5E1" stroke-width="1.5" stroke-dasharray="4,4" />
+        <path d="M 30,280 Q 250,220 500,290 T 780,240" fill="none" stroke="#CBD5E1" stroke-width="1.5" stroke-dasharray="4,4" />
+        <path d="M 70,120 Q 300,80 550,140 T 760,100" fill="none" stroke="#CBD5E1" stroke-width="1.5" stroke-dasharray="4,4" />
+
+        <!-- Forest Sector (Top Sector) -->
+        <rect x="0" y="0" width="800" height="180" fill="#F0FDF4" opacity="0.6" />
+        <text x="30" y="45" font-family="Inter, sans-serif" font-size="13" font-weight="700" fill="#15803D" letter-spacing="0.05em">BANDIPUR / KUMILY FOREST RESERVE (CORE HABITAT)</text>
+
+        <!-- 1.2km Conflict Buffer Zone Perimeter -->
+        <circle cx="400" cy="330" r="150" fill="${isAtRisk ? '#FEE2E2' : '#F0FDF4'}" fill-opacity="0.35" stroke="${isAtRisk ? '#DC2626' : '#15803D'}" stroke-width="2.5" stroke-dasharray="8,6" />
+        <text x="400" y="195" font-family="Inter, sans-serif" font-size="12" font-weight="600" fill="${isAtRisk ? '#DC2626' : '#15803D'}" text-anchor="middle">1.2 km Conflict Buffer Perimeter (Zone A)</text>
+
+        <!-- Threat Incursion Vector -->
+        ${isAtRisk ? `
+          <line x1="560" y1="90" x2="490" y2="210" stroke="#DC2626" stroke-width="3" stroke-dasharray="6,4" />
+          <polygon points="490,210 495,198 505,206" fill="#DC2626" />
+          <circle cx="560" cy="90" r="16" fill="#DC2626" opacity="0.9" />
+          <text x="560" y="95" font-size="14" text-anchor="middle" fill="#FFFFFF">🦁</text>
+          <rect x="585" y="75" width="165" height="32" rx="4" fill="#FFFFFF" stroke="#DC2626" stroke-width="1.5"/>
+          <text x="595" y="96" font-family="Inter, sans-serif" font-size="11" font-weight="700" fill="#DC2626">TIGER / LION DETECTED</text>
+        ` : ''}
+
+        <!-- Camera Station CAM-01 -->
+        <circle cx="480" cy="220" r="12" fill="#2563EB" />
+        <text x="480" y="224" font-size="10" text-anchor="middle" fill="#FFFFFF">📹</text>
+        <rect x="500" y="208" width="135" height="24" rx="4" fill="#FFFFFF" stroke="#2563EB" stroke-width="1"/>
+        <text x="508" y="224" font-family="Inter, sans-serif" font-size="11" font-weight="600" fill="#1E293B">CAM-01 (North Ridge)</text>
+
+        <!-- Village 1 Center -->
+        <circle cx="400" cy="330" r="14" fill="${isAtRisk ? '#DC2626' : '#15803D'}" />
+        <circle cx="400" cy="330" r="22" fill="none" stroke="${isAtRisk ? '#DC2626' : '#15803D'}" stroke-width="1.5" opacity="0.5" />
+        <rect x="320" y="355" width="160" height="38" rx="6" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.5" />
+        <text x="400" y="372" font-family="Inter, sans-serif" font-size="12" font-weight="700" fill="#1E293B" text-anchor="middle">Village 1 (Kumily Fringe)</text>
+        <text x="400" y="386" font-family="Inter, sans-serif" font-size="10" font-weight="600" fill="${isAtRisk ? '#DC2626' : '#15803D'}" text-anchor="middle">${isAtRisk ? 'STATUS: AT RISK' : 'STATUS: SECURE'}</text>
+
+        <!-- Siren Station Marker -->
+        <circle cx="340" cy="290" r="10" fill="${sirenOn ? '#DC2626' : '#64748B'}" />
+        <text x="340" y="294" font-size="9" text-anchor="middle" fill="#FFFFFF">${sirenOn ? '🔔' : '🔕'}</text>
+        <text x="260" y="294" font-family="Inter, sans-serif" font-size="11" font-weight="600" fill="#1E293B">Siren 1 (${sirenOn ? 'ON' : 'OFF'})</text>
+
+        <!-- Coordinates Callout -->
+        <text x="770" y="480" font-family="Inter, sans-serif" font-size="11" font-weight="500" fill="#94A3B8" text-anchor="end">Ref Coordinates: 11.685° N, 76.620° E (Kumily WGS84)</text>
+      </svg>
+      <div style="position: absolute; bottom: 12px; left: 16px; background: rgba(255,255,255,0.95); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 6px 12px; font-size: 11px; color: var(--text-secondary);">
+        <strong>Vector Perimeter View:</strong> Real-time spatial tracking active (Leaflet offline mode)
+      </div>
+    </div>
+  `;
 }
 
 // Called from Leaflet popup button (global scope needed)

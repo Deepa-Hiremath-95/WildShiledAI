@@ -27,10 +27,10 @@
             <article class="glass-card panel-card live-feed-card">
               <div class="card-heading">
                 <div>
-                  <p class="eyebrow">Surveillance</p>
-                  <h3>LIVE CAMERA FEED</h3>
+                  <p class="eyebrow">Surveillance • North Ridge Station</p>
+                  <h3>CAM-01 CAMERA FEED</h3>
                 </div>
-                <span class="status-pill online">● LIVE</span>
+                <span class="status-pill warning" id="liveFeedStatusPill">● DEMO STREAM (YOLOv11)</span>
               </div>
               <div class="feed-visual">
                 <div class="feed-overlay" data-role="live-feed">
@@ -47,10 +47,10 @@
             <article class="glass-card panel-card map-card-panel">
               <div class="card-heading">
                 <div>
-                  <p class="eyebrow">Tracking</p>
-                  <h3>LIVE MAP & MOVEMENT TRACKING</h3>
+                  <p class="eyebrow">Perimeter tracking • Kumily Buffer Zone</p>
+                  <h3>ZONE A MOVEMENT TRACKING</h3>
                 </div>
-                <span class="status-pill warning">Monitoring</span>
+                <span class="status-pill online">Active Monitoring</span>
               </div>
               <div class="map-panel">
                 <div class="map-points" data-role="index-map-markers">
@@ -156,15 +156,23 @@
 
               <div class="intrusion-hero">
                 <div class="intrusion-image" aria-label="Detection image placeholder">
-                  <div class="intrusion-image-badge">Detection image</div>
+                  <div class="intrusion-image-badge">Thermal sensor & AI detection</div>
                   <svg viewBox="0 0 320 220" role="img" aria-hidden="true">
-                    <rect width="320" height="220" rx="24" fill="#081118" />
-                    <rect x="24" y="28" width="272" height="164" rx="18" fill="#0f202c" stroke="rgba(255,255,255,0.12)" />
-                    <circle cx="116" cy="116" r="34" fill="#ff5a5f" opacity="0.92" />
-                    <rect x="112" y="98" width="52" height="70" rx="16" fill="#f7efe2" />
-                    <rect x="114" y="88" width="28" height="24" rx="12" fill="#f7efe2" />
-                    <path d="M90 160h112" stroke="#4de28a" stroke-width="6" stroke-linecap="round" />
-                    <path d="M86 112c10-18 24-30 44-31" stroke="#4aa7ff" stroke-width="4" stroke-linecap="round" />
+                    <rect width="320" height="220" rx="12" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1.5" />
+                    <rect x="18" y="18" width="284" height="184" rx="8" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1" />
+                    <!-- Camera Grid & Crosshairs -->
+                    <line x1="18" y1="110" x2="302" y2="110" stroke="#F1F5F9" stroke-width="1" stroke-dasharray="4 4" />
+                    <line x1="160" y1="18" x2="160" y2="202" stroke="#F1F5F9" stroke-width="1" stroke-dasharray="4 4" />
+                    <!-- AI Detection Bounding Box -->
+                    <rect x="85" y="42" width="150" height="136" rx="6" fill="rgba(220, 38, 38, 0.04)" stroke="#DC2626" stroke-width="1.5" stroke-dasharray="6 3" />
+                    <rect x="85" y="42" width="94" height="20" rx="4" fill="#DC2626" />
+                    <text x="92" y="56" fill="#FFFFFF" font-size="11" font-weight="600" font-family="Inter, sans-serif">HUMAN • 95%</text>
+                    <!-- Figure -->
+                    <circle cx="160" cy="88" r="14" fill="#DC2626" opacity="0.85" />
+                    <path d="M138 140 C138 108, 182 108, 182 140 Z" fill="#DC2626" opacity="0.85" />
+                    <!-- Perimeter Warning Line -->
+                    <line x1="40" y1="182" x2="280" y2="182" stroke="#D97706" stroke-width="2" stroke-linecap="round" stroke-dasharray="4 4" />
+                    <text x="160" y="196" text-anchor="middle" fill="#64748B" font-size="10" font-family="Inter, sans-serif" font-weight="500">BOUNDARY FENCE SENSOR</text>
                   </svg>
                 </div>
 

@@ -44,6 +44,11 @@ def _fmt_alert_for_frontend(a: models.Alert) -> dict:
         else "Forest team notified discreetly • Monitoring continued"
     )
 
+    sms_status = (
+        "Delivered (Mock Provider)" if a.sms_sent
+        else ("Failed" if a.created_at else "Pending")
+    )
+
     return {
         "id": a.id,
         "title": a.title,
@@ -51,6 +56,7 @@ def _fmt_alert_for_frontend(a: models.Alert) -> dict:
         "status": a.status,
         "read": bool(getattr(a, "read", False)),
         "isRead": bool(getattr(a, "read", False)),
+        "confidence": a.confidence,
         "detectedObject": a.species or ("Human" if a.event_type == models.EventType.PERSON_DETECTED else "Animal"),
         "speciesOrHuman": (
             f"Human • {a.species}" if a.event_type == models.EventType.PERSON_DETECTED
@@ -58,11 +64,15 @@ def _fmt_alert_for_frontend(a: models.Alert) -> dict:
         ),
         "location": a.camera.name if a.camera else a.zone.name,
         "zone": a.zone.name,
-        "village": a.zone.name,
+        "village": a.zone.name.split("—")[0].strip() if "—" in a.zone.name else a.zone.name,
         "movementDirection": a.movement_direction or "Unknown",
         "actionTaken": action_taken,
         "timestamp": a.created_at.isoformat(),
         "recipients": recipients,
+        "sirenActivated": bool(a.siren_activated),
+        "smsSent": bool(a.sms_sent),
+        "smsDeliveryStatus": sms_status,
+        "eventType": a.event_type.value if hasattr(a.event_type, "value") else str(a.event_type),
     }
 
 
@@ -117,9 +127,13 @@ def get_villages(db: Session = Depends(get_db)):
             "id": z.id,
             "name": z.name,
             "zone": z.name,
-            "status": "at-risk" if recent_critical else "safe",
+            "status": "at-risk" if (recent_critical or z.siren_status) else "safe",
             "sirenId": z.id,
             "sirenStatus": "on" if z.siren_status else "off",
+            "lat": z.latitude,
+            "lng": z.longitude,
+            "latitude": z.latitude,
+            "longitude": z.longitude,
         })
     return out
 
@@ -127,6 +141,7 @@ def get_villages(db: Session = Depends(get_db)):
 @router.get("/sirens")
 def get_sirens(db: Session = Depends(get_db)):
     zones = db.query(models.Zone).filter(models.Zone.type == models.ZoneType.ANIMAL).all()
+    is_mock = getattr(hardware_service, "MOCK_MODE", True)
     return [
         {
             "id": z.id,
@@ -134,7 +149,10 @@ def get_sirens(db: Session = Depends(get_db)):
             "currentStatus": "on" if z.siren_status else "off",
             "zoneStatus": "At Risk" if z.siren_status else "Safe",
             "village": z.name,
-            "connected": True,  # TODO: wire to real heartbeat once hardware/siren_controller.py reports in
+            "connected": True,
+            "isHardwareConnected": not is_mock,
+            "hardwareMode": "simulated" if is_mock else "gpio_relay",
+            "hardwareStatusLabel": "Simulated Controller (Mock Mode)" if is_mock else "Hardware Relay Armed (GPIO 18)",
             "lastActivatedAt": z.siren_activated_at.isoformat() if z.siren_activated_at else None,
             "activationReason": z.siren_reason or "No active threat",
         }

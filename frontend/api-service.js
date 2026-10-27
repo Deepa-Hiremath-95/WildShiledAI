@@ -165,10 +165,9 @@
       falseAlarmStats: { falseAlarms: 6, confirmedIntrusions: 35 }
     },
     zones: [
-      { id: 'z1', name: 'Zone A', status: 'at-risk', lat: 12.9716, lng: 77.5946, incidents: 16, village: 'Village 1' },
-      { id: 'z2', name: 'Zone B', status: 'safe', lat: 12.9790, lng: 77.6100, incidents: 19, village: 'Village 2' },
-      { id: 'z3', name: 'Zone C', status: 'safe', lat: 12.9650, lng: 77.6250, incidents: 24, village: 'Village 3' },
-      { id: 'z4', name: 'Boundary Ridge', status: 'safe', lat: 12.9880, lng: 77.6050, incidents: 11, village: 'Village 4' }
+      { id: 'z1', name: 'Village 1 — Zone A', status: 'at-risk', lat: 11.685, lng: 76.620, latitude: 11.685, longitude: 76.620, incidents: 16, village: 'Village 1' },
+      { id: 'z2', name: 'Village 2 — Zone B', status: 'safe', lat: 11.692, lng: 76.635, latitude: 11.692, longitude: 76.635, incidents: 19, village: 'Village 2' },
+      { id: 'z3', name: 'Core Reserve — Zone C', status: 'safe', lat: 11.678, lng: 76.610, latitude: 11.678, longitude: 76.610, incidents: 24, village: 'Core Reserve' }
     ],
     cameras: [
       { id: 'cam-01', name: 'Camera 01', zone: 'Zone A', status: 'online', lastSeenMinutesAgo: 0 },
@@ -400,6 +399,16 @@
         const alert = mockState.activeAlerts.find((a) => a.id === id);
         if (alert) alert.read = !alert.read;
         return Promise.resolve({ id, read: alert ? alert.read : true, status: 'ok' });
+      }
+
+      if (path.startsWith('/alerts/') && path.endsWith('/resolve') && method === 'POST') {
+        const id = path.split('/')[2];
+        const alert = mockState.activeAlerts.find((a) => a.id === id);
+        if (alert) {
+          alert.status = 'resolved';
+          alert.actionTaken = 'Resolved by operator';
+        }
+        return Promise.resolve(alert || { id, status: 'resolved' });
       }
 
       if (path === '/alerts/mark-all-read' && method === 'POST') {

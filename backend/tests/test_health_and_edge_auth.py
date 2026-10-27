@@ -123,6 +123,7 @@ async def test_siren_auto_turn_off_task(client, db_session):
 def test_inference_script_api_key_handling():
     """Verify that inference.py defines --api-key argument and attaches X-API-Key header.
     Also verifies the new tracking kwargs (track_id, movement_direction, boundary_crossing)."""
+    import os
     import sys
     from unittest.mock import patch, MagicMock
     import importlib.util
@@ -130,9 +131,12 @@ def test_inference_script_api_key_handling():
     mock_cv2 = MagicMock()
     mock_ultralytics = MagicMock()
     with patch.dict(sys.modules, {"cv2": mock_cv2, "ultralytics": mock_ultralytics}):
+        inference_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "..", "ai-model", "inference.py")
+        )
         spec = importlib.util.spec_from_file_location(
             "inference",
-            "c:/wildshild AI/ai-model/inference.py"
+            inference_path
         )
         inference_mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(inference_mod)

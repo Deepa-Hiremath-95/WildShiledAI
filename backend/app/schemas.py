@@ -20,6 +20,11 @@ class ZoneOut(ZoneCreate):
     model_config = ConfigDict(from_attributes=True)
     id: str
     created_at: datetime
+    lat: Optional[float] = None
+    lng: Optional[float] = None
+    status: Optional[str] = "safe"
+    village: Optional[str] = None
+    incidents: Optional[int] = 0
 
 
 # ---------- Camera ----------
