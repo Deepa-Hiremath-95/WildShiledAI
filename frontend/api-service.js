@@ -176,11 +176,47 @@
       { id: 'cam-04', name: 'Camera 04', zone: 'Boundary Ridge', status: 'online', lastSeenMinutesAgo: 1 }
     ]
   };
-
   const service = {
-    // Points at the FastAPI backend (see /backend). Change to '/api' instead if you put
-    // this frontend behind the same origin/reverse proxy as the backend in production.
-    baseUrl: 'http://localhost:8000/api',
+    _customBaseUrl: null,
+    get baseUrl() {
+      if (this._customBaseUrl) return this._customBaseUrl;
+      return this.resolveBaseUrl();
+    },
+    set baseUrl(val) {
+      this._customBaseUrl = val;
+    },
+    resolveBaseUrl() {
+      // 1. Explicit window override (injected or config.js)
+      if (typeof window !== 'undefined' && window.__WILDSHIELD_API_URL__) {
+        return window.__WILDSHIELD_API_URL__.replace(/\/+$/, '');
+      }
+      if (typeof window !== 'undefined' && window.__WILDSHIELD_CONFIG__ && window.__WILDSHIELD_CONFIG__.API_BASE_URL) {
+        return window.__WILDSHIELD_CONFIG__.API_BASE_URL.replace(/\/+$/, '');
+      }
+      // 2. URL parameter override: ?api=https://...
+      if (typeof window !== 'undefined' && window.location) {
+        const p = new URLSearchParams(window.location.search);
+        const apiParam = p.get('api');
+        if (apiParam) {
+          try { localStorage.setItem('wildshield_api_url', apiParam); } catch (_) {}
+          return apiParam.replace(/\/+$/, '');
+        }
+      }
+      // 3. LocalStorage override
+      try {
+        const stored = localStorage.getItem('wildshield_api_url');
+        if (stored) return stored.replace(/\/+$/, '');
+      } catch (_) {}
+      // 4. Localhost / local development
+      if (typeof window !== 'undefined' && window.location) {
+        const host = window.location.hostname;
+        if (host === 'localhost' || host === '127.0.0.1' || host === '') {
+          return 'http://localhost:8000/api';
+        }
+      }
+      // 5. Production default (same-origin / reverse proxy via Vercel)
+      return '/api';
+    },
     // Flip to true any time you want to demo the UI with canned data and no backend running.
     // Also auto-enabled when ?demo=1 or ?mock=1 is in the URL.
     useMock: (function() {
@@ -234,19 +270,32 @@
         headers.Authorization = `Bearer ${token}`;
       }
 
-      const response = await fetch(`${this.baseUrl}${path}`, {
-        ...options,
-        headers
-      });
+      try {
+        const response = await fetch(`${this.baseUrl}${path}`, {
+          ...options,
+          headers
+        });
 
-      if (!response.ok) {
-        const error = new Error(`Request failed: ${response.status}`);
-        error.status = response.status;
-        throw error;
+        if (!response.ok) {
+          const error = new Error(`Request failed: ${response.status}`);
+          error.status = response.status;
+          throw error;
+        }
+
+        if (response.status === 204) return null;
+        return response.json();
+      } catch (err) {
+        const autoFallback = typeof window !== 'undefined' &&
+          window.__WILDSHIELD_CONFIG__ &&
+          window.__WILDSHIELD_CONFIG__.AUTO_FALLBACK_ON_ERROR;
+
+        if (autoFallback) {
+          console.warn(`[WildShield] Backend at "${this.baseUrl}" unreachable (${err.message}). Serving simulated preview telemetry.`);
+          await wait(50);
+          return this.handleMock(path, options);
+        }
+        throw err;
       }
-
-      if (response.status === 204) return null;
-      return response.json();
     },
     handleMock(path, options = {}) {
       const method = (options.method || 'GET').toUpperCase();

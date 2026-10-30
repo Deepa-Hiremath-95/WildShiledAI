@@ -4,7 +4,11 @@
  * Handles active link state dynamically based on window.location.pathname.
  */
 (function () {
-  const currentPath = window.location.pathname.split('/').filter(Boolean).pop() || 'index.html';
+  let rawPath = window.location.pathname.split('/').filter(Boolean).pop() || 'index.html';
+  if (!rawPath.endsWith('.html') && !rawPath.includes('.')) {
+    rawPath += '.html';
+  }
+  const currentPath = rawPath;
 
   const pages = {
     'index.html': { title: 'WildShield AI Command Center', subtitle: 'AI-Powered Early Warning System for Human–Wildlife Conflict Zones' },

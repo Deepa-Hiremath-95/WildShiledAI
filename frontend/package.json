@@ -1,0 +1,10 @@
+{
+  "name": "wildshield-ai-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "WildShield AI — AI-Powered Early Warning System for Human-Wildlife Conflict Zones",
+  "scripts": {
+    "build": "echo 'WildShield AI static frontend ready for deployment'",
+    "start": "npx serve ."
+  }
+}

@@ -3,11 +3,22 @@ __pycache__/
 *.pyc
 venv/
 .venv/
+venv*/
+**/venv*/
 *.egg-info/
+.pytest_cache/
 
-# Backend
+# Databases & local environment
+*.db
+*.sqlite
+*.sqlite3
+wildshield.db
 backend/wildshield.db
 backend/.env
+.env
+*.env
+
+# Snapshots
 backend/snapshots/*.jpg
 !backend/snapshots/.gitkeep
 
@@ -20,8 +31,10 @@ ai-model/data/val/images/*
 ai-model/data/val/labels/*
 !ai-model/data/**/.gitkeep
 
-# Node (if you later add tooling to frontend)
+# Node & deployment tooling
 node_modules/
+.vercel/
 
 # OS
 .DS_Store
+Thumbs.db

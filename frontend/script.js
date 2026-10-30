@@ -282,11 +282,27 @@ function flashAlertCard() {
   setTimeout(() => card.classList.remove('flash-new'), 1200);
 }
 
+function getWebSocketUrl() {
+  const base = (window.WildShieldApi?.baseUrl || '/api').trim();
+  if (base.startsWith('http://') || base.startsWith('https://')) {
+    const origin = base.replace(/\/api\/?$/, '');
+    const wsProto = origin.startsWith('https://') ? 'wss://' : 'ws://';
+    return origin.replace(/^https?:\/\//, wsProto) + '/ws';
+  }
+  if (typeof window !== 'undefined' && window.location && window.location.host) {
+    const wsProto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    return `${wsProto}//${window.location.host}/ws`;
+  }
+  return null;
+}
+
 function initWebSocket() {
-  const wsOrigin = (window.WildShieldApi?.baseUrl || 'http://localhost:8000/api')
-    .replace(/\/api$/, '')
-    .replace(/^http/, 'ws');
-  const wsUrl = `${wsOrigin}/ws`;
+  const wsUrl = getWebSocketUrl();
+  if (!wsUrl) {
+    setWsPill('offline');
+    startPollingFallback();
+    return;
+  }
 
   let ws;
   try {
@@ -445,7 +461,7 @@ async function hydrateDashboard() {
     document.dispatchEvent(new CustomEvent('wildshield:data-ready'));
   } catch (error) {
     console.error('Failed to hydrate WildShield UI', error);
-    toast('Could not reach the WildShield backend. Is it running on :8000?', 'error', 5000);
+    toast('Could not reach the WildShield API. Attempting automatic reconnection...', 'error', 5000);
   }
 }
 
@@ -1196,7 +1212,8 @@ function renderIndexHero(detections, alerts, villages, sirens) {
 
   if (feedEl) {
     if (latestDetection) {
-      const backendOrigin = (window.WildShieldApi?.baseUrl || 'http://localhost:8000/api').replace(/\/api$/, '');
+      const apiBase = window.WildShieldApi?.baseUrl || '/api';
+      const backendOrigin = apiBase.startsWith('http') ? apiBase.replace(/\/api\/?$/, '') : '';
       const snapshotUrl = latestDetection.snapshotUrl
         ? (latestDetection.snapshotUrl.startsWith('http') ? latestDetection.snapshotUrl : `${backendOrigin}${latestDetection.snapshotUrl}`)
         : null;

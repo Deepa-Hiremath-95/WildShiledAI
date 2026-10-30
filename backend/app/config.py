@@ -1,3 +1,5 @@
+from typing import Union
+from pydantic import field_validator
 from pydantic_settings import BaseSettings
 
 
@@ -23,7 +25,7 @@ class Settings(BaseSettings):
 
     edge_api_key: str = ""  # optional API key for edge device /api/detections ingestion (default empty = open)
 
-    cors_origins: list[str] = [
+    cors_origins: Union[list[str], str] = [
         "http://localhost:5173",
         "http://127.0.0.1:5173",
         "http://localhost:3000",
@@ -34,6 +36,20 @@ class Settings(BaseSettings):
         "http://127.0.0.1:5500",
         "*",
     ]
+
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def parse_cors_origins(cls, v):
+        if isinstance(v, str):
+            v_stripped = v.strip()
+            if v_stripped.startswith("[") and v_stripped.endswith("]"):
+                import json
+                try:
+                    return json.loads(v_stripped)
+                except Exception:
+                    pass
+            return [origin.strip() for origin in v.split(",") if origin.strip()]
+        return v
 
     class Config:
         env_file = ".env"

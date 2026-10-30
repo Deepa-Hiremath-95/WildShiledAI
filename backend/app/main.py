@@ -12,10 +12,24 @@ from app.config import settings
 
 Base.metadata.create_all(bind=engine)
 
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    try:
+        from app import seed
+        seed.run()
+    except Exception as e:
+        import logging
+        logging.getLogger("wildshield").warning(f"Initial seed check: {e}")
+    yield
+
+
 app = FastAPI(
     title="WildShield-AI API",
     description="Backend for the AI-powered human–wildlife conflict early warning system",
     version="1.0.0",
+    lifespan=lifespan,
 )
 
 # Configurable CORS origins via settings.cors_origins
@@ -45,6 +59,7 @@ app.include_router(health.router)
 @app.get("/")
 def root():
     return {"status": "ok", "service": "wildshield-ai-backend"}
+
 
 
 
