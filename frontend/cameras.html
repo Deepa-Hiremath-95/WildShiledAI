@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Camera Management | WildShield AI</title>
+    <meta name="description" content="Manage surveillance camera network, edge streaming sources, heartbeat telemetry and zone mapping." />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <div class="main-panel">
+        <main class="dashboard-grid">
+
+          <!-- Camera Management Metrics Header -->
+          <section class="summary-grid">
+            <article class="glass-card stat-card highlight">
+              <p>Registered Cameras</p>
+              <h3 id="cmTotalCamerasCount">--</h3>
+              <span class="trend up">Surveillance Nodes</span>
+            </article>
+            <article class="glass-card stat-card">
+              <p>Cameras Online</p>
+              <h3 id="cmOnlineCamerasCount" style="color: var(--primary-green);">--</h3>
+              <span class="trend up">Active Heartbeat (<90s)</span>
+            </article>
+            <article class="glass-card stat-card">
+              <p>Cameras Offline</p>
+              <h3 id="cmOfflineCamerasCount">--</h3>
+              <span class="trend neutral">Stale / Disconnected</span>
+            </article>
+            <article class="glass-card stat-card">
+              <p>Active Test Camera</p>
+              <h3 id="cmTestCameraDisplay">CAM-001</h3>
+              <span class="trend up">Laptop Webcam Device 0</span>
+            </article>
+          </section>
+
+          <!-- Camera Inventory & Management Actions -->
+          <section class="main-dashboard-grid" style="grid-template-columns: 1fr;">
+            <article class="glass-card panel-card">
+              <div class="card-heading" style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <p class="eyebrow">Sensor Network Topology • Module 2 & 4</p>
+                  <h3>Edge Camera Nodes & Stream Sources</h3>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                  <button class="btn btn-outline btn-sm" id="cmRefreshBtn">↻ Refresh Cameras</button>
+                  <button class="btn btn-primary btn-sm" id="cmOpenRegisterModalBtn">+ Register New Camera</button>
+                </div>
+              </div>
+
+              <!-- Camera Grid Display Cards -->
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; margin-top: 16px;" id="cmCameraCardsGrid">
+                <div style="padding: 32px; text-align: center; color: var(--text-secondary); grid-column: 1 / -1;">
+                  Loading surveillance cameras and stream sources…
+                </div>
+              </div>
+            </article>
+          </section>
+
+          <!-- Camera Inventory Table -->
+          <section class="lower-grid" style="grid-template-columns: 1fr;">
+            <article class="glass-card panel-card table-card">
+              <div class="card-heading">
+                <div>
+                  <p class="eyebrow">Inventory Matrix</p>
+                  <h3>Camera Configuration & Heartbeat Telemetry</h3>
+                </div>
+              </div>
+
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Camera ID</th>
+                      <th>Camera Name</th>
+                      <th>Assigned Village</th>
+                      <th>Assigned Zone</th>
+                      <th>Stream Source / Hardware</th>
+                      <th>Connection Status</th>
+                      <th>Last Heartbeat</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="cmCameraTableBody">
+                    <tr>
+                      <td colspan="8" style="text-align: center; color: var(--text-secondary); padding: 24px;">
+                        Loading camera directory from backend…
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </article>
+          </section>
+
+        </main>
+      </div>
+    </div>
+
+    <!-- Register Camera Modal -->
+    <div class="modal-overlay" id="cmRegisterModal" style="display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.6); z-index: 1000; align-items: center; justify-content: center;">
+      <div class="modal-box glass-card" style="background: white; border-radius: var(--radius-lg); max-width: 500px; width: 90%; padding: 24px; box-shadow: var(--shadow-lg);">
+        <div class="card-heading" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 16px;">
+          <div>
+            <p class="eyebrow">Sensor Network Configuration</p>
+            <h3 style="margin: 0;">Register New Camera</h3>
+          </div>
+          <button class="icon-btn modal-close" id="cmCloseModalBtn" style="border: none; background: transparent; font-size: 20px; cursor: pointer;">&times;</button>
+        </div>
+
+        <form id="cmRegisterCameraForm">
+          <div style="display: flex; flex-direction: column; gap: 14px;">
+            <div>
+              <label style="font-size: 12px; font-weight: 600; color: var(--text); display: block; margin-bottom: 4px;">Camera Name *</label>
+              <input type="text" id="cmInputName" placeholder="e.g. West Ridge Boundary Cam" required style="width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm);" />
+            </div>
+
+            <div>
+              <label style="font-size: 12px; font-weight: 600; color: var(--text); display: block; margin-bottom: 4px;">Assigned Village / Zone *</label>
+              <select id="cmInputZone" required style="width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: white;">
+                <option value="">Loading zones…</option>
+              </select>
+            </div>
+
+            <div>
+              <label style="font-size: 12px; font-weight: 600; color: var(--text); display: block; margin-bottom: 4px;">Stream Source / Device Index *</label>
+              <input type="text" id="cmInputStream" placeholder="0 (Webcam) or rtsp://192.168.1.100/stream" value="0" required style="width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm);" />
+              <small style="color: var(--text-secondary); font-size: 11px; margin-top: 4px; display: block;">Use '0' or '1' for local USB/Laptop webcam or enter RTSP / video path.</small>
+            </div>
+
+            <div style="margin-top: 10px; display: flex; justify-content: flex-end; gap: 10px;">
+              <button type="button" class="btn btn-outline" id="cmCancelBtn">Cancel</button>
+              <button type="submit" class="btn btn-primary" id="cmSubmitBtn">Register Camera</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="config.js"></script>
+    <script src="api-service.js"></script>
+    <script src="layout.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>
+

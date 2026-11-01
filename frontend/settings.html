@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>System Settings | WildShield AI</title>
+    <meta name="description" content="Configure detection rule engine thresholds, siren cooldowns, monitoring zones and backend connection parameters." />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <div class="main-panel">
+        <main class="dashboard-grid">
+
+          <!-- Settings Summary Overview -->
+          <section class="summary-grid">
+            <article class="glass-card stat-card highlight">
+              <p>Confidence Floor</p>
+              <h3 id="setConfDisplay">60%</h3>
+              <span class="trend up">Phase 2/3 Standard</span>
+            </article>
+            <article class="glass-card stat-card">
+              <p>Animal Siren Cooldown</p>
+              <h3>90s</h3>
+              <span class="trend neutral">Noise Fatigue Prevention</span>
+            </article>
+            <article class="glass-card stat-card">
+              <p>Siren Active Duration</p>
+              <h3>45s</h3>
+              <span class="trend neutral">Auto-Off Timer</span>
+            </article>
+            <article class="glass-card stat-card">
+              <p>Duplicate Window</p>
+              <h3>10s</h3>
+              <span class="trend up">Temporal Track IoU</span>
+            </article>
+          </section>
+
+          <!-- Settings Main Configuration Form Grid -->
+          <section class="main-dashboard-grid" style="grid-template-columns: 1fr 1fr;">
+
+            <!-- Panel 1: Detection Rule Engine Parameters -->
+            <article class="glass-card panel-card">
+              <div class="card-heading" style="border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 16px;">
+                <div>
+                  <p class="eyebrow">Module 3 & 10 Rule Configuration</p>
+                  <h3>Detection Rule Engine</h3>
+                </div>
+              </div>
+
+              <form id="setDetectionForm">
+                <div style="display: flex; flex-direction: column; gap: 16px;">
+                  <div>
+                    <label style="font-size: 13px; font-weight: 600; color: var(--text); display: flex; justify-content: space-between;">
+                      <span>Global Confidence Threshold</span>
+                      <strong id="setConfValText" style="color: var(--primary-green);">60%</strong>
+                    </label>
+                    <input type="range" min="50" max="95" step="5" value="60" id="setConfSlider" style="width: 100%; margin-top: 8px;" />
+                    <small style="color: var(--text-secondary); font-size: 11px;">Detections below this floor are automatically ignored without alert trigger.</small>
+                  </div>
+
+                  <div>
+                    <label style="font-size: 13px; font-weight: 600; color: var(--text); display: block; margin-bottom: 6px;">Supported Wildlife Species</label>
+                    <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                      <span class="status-pill online">Elephant (Animal Alert)</span>
+                      <span class="status-pill online">Leopard (Animal Alert)</span>
+                      <span class="status-pill online">Deer (Animal Alert)</span>
+                      <span class="status-pill online">Wild Boar (Animal Alert)</span>
+                      <span class="status-pill warning">Human (Discreet Notification Only)</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style="font-size: 13px; font-weight: 600; color: var(--text); display: block; margin-bottom: 6px;">Excluded Non-Threat Classes</label>
+                    <div style="display: flex; gap: 6px;">
+                      <span class="status-pill offline" style="background: #F1F5F9; color: #64748B;">Peacock (Always Ignored)</span>
+                      <span class="status-pill offline" style="background: #F1F5F9; color: #64748B;">Unknown / Background</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style="font-size: 13px; font-weight: 600; color: var(--text); display: block; margin-bottom: 6px;">Target Village Configuration</label>
+                    <select id="setTargetZoneSelect" style="width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: white;">
+                      <option value="">Loading configured zones…</option>
+                    </select>
+                  </div>
+
+                  <div style="display: flex; justify-content: flex-end; margin-top: 8px;">
+                    <button type="submit" class="btn btn-primary" id="setSaveRulesBtn">Save Rule Thresholds</button>
+                  </div>
+                </div>
+              </form>
+            </article>
+
+            <!-- Panel 2: Acoustic Siren & Monitoring Preferences -->
+            <article class="glass-card panel-card">
+              <div class="card-heading" style="border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 16px;">
+                <div>
+                  <p class="eyebrow">Module 9 Siren Parameters</p>
+                  <h3>Acoustic & Timing Preferences</h3>
+                </div>
+              </div>
+
+              <form id="setSirenForm">
+                <div style="display: flex; flex-direction: column; gap: 16px;">
+                  <div>
+                    <label style="font-size: 13px; font-weight: 600; color: var(--text); display: block; margin-bottom: 4px;">Animal Siren Cooldown (seconds)</label>
+                    <input type="number" id="setCooldownInput" value="90" min="30" max="300" style="width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm);" />
+                    <small style="color: var(--text-secondary); font-size: 11px;">Duration during which rapid repeated animal detections will not re-trigger the siren.</small>
+                  </div>
+
+                  <div>
+                    <label style="font-size: 13px; font-weight: 600; color: var(--text); display: block; margin-bottom: 4px;">Siren Playback Duration (seconds)</label>
+                    <input type="number" id="setDurationInput" value="45" min="15" max="120" style="width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm);" />
+                    <small style="color: var(--text-secondary); font-size: 11px;">Automatic auto-off timer for village speaker relays.</small>
+                  </div>
+
+                  <div>
+                    <label style="font-size: 13px; font-weight: 600; color: var(--text); display: block; margin-bottom: 4px;">Duplicate Detection Window (seconds)</label>
+                    <input type="number" id="setDupWindowInput" value="10" min="3" max="30" style="width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm);" />
+                    <small style="color: var(--text-secondary); font-size: 11px;">Multi-frame persistence track window to deduplicate same object.</small>
+                  </div>
+
+                  <div>
+                    <label style="font-size: 13px; font-weight: 600; color: var(--text); display: block; margin-bottom: 4px;">Human Incursion Acoustic Behavior</label>
+                    <input type="text" value="SIREN STRICTLY MUTED (LOCKED POLICY)" disabled style="width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: #F8FAFC; color: #2563EB; font-weight: 600;" />
+                  </div>
+
+                  <div style="display: flex; justify-content: flex-end; margin-top: 8px;">
+                    <button type="submit" class="btn btn-primary" id="setSaveSirenBtn">Save Acoustic Timing</button>
+                  </div>
+                </div>
+              </form>
+            </article>
+
+            <!-- Panel 3: Backend & API Bridge Configuration -->
+            <article class="glass-card panel-card" style="grid-column: span 2;">
+              <div class="card-heading" style="border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 16px;">
+                <div>
+                  <p class="eyebrow">FastAPI Infrastructure Bridge</p>
+                  <h3>Backend & Edge Connection Settings</h3>
+                </div>
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                  <div>
+                    <label style="font-size: 13px; font-weight: 600; color: var(--text); display: block; margin-bottom: 4px;">FastAPI Backend URL</label>
+                    <input type="text" id="setBackendUrlInput" value="http://localhost:8000/api" style="width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm);" />
+                    <small style="color: var(--text-secondary); font-size: 11px;">Target REST and WebSocket endpoint for the WildShield AI dashboard.</small>
+                  </div>
+
+                  <div>
+                    <label style="font-size: 13px; font-weight: 600; color: var(--text); display: block; margin-bottom: 4px;">Edge Device API Key (Optional)</label>
+                    <input type="password" id="setEdgeKeyInput" placeholder="Leave empty for open local development" style="width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm);" />
+                  </div>
+                </div>
+
+                <div style="display: flex; flex-direction: column; justify-content: space-between; padding: 16px; background: #F8FAFC; border: 1px solid var(--border); border-radius: var(--radius-md);">
+                  <div>
+                    <strong style="font-size: 14px; color: var(--text);">Connection Status Check</strong>
+                    <p style="margin: 6px 0 12px; font-size: 12px; color: var(--text-secondary);">
+                      Verify that the FastAPI backend server is alive and responding to health check probes on port 8000.
+                    </p>
+                    <div id="setConnectionResult" style="font-size: 13px; font-weight: 600; color: var(--text-secondary);">
+                      Status: Ready to test
+                    </div>
+                  </div>
+
+                  <div style="display: flex; gap: 10px; margin-top: 16px;">
+                    <button class="btn btn-outline" id="setTestConnectionBtn">Test Backend Connection</button>
+                    <button class="btn btn-primary" id="setSaveBackendBtn">Apply Backend URL</button>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+          </section>
+
+        </main>
+      </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="config.js"></script>
+    <script src="api-service.js"></script>
+    <script src="layout.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>
+

@@ -26,9 +26,9 @@
  *    to simulated telemetry so the dashboard remains fully operational.
  */
 window.__WILDSHIELD_CONFIG__ = {
-  // Set your production FastAPI backend URL here:
-  API_BASE_URL: '',
+  // Set your FastAPI backend URL (defaults to http://localhost:8000/api)
+  API_BASE_URL: 'http://localhost:8000/api',
 
-  // Enable graceful fallback to simulated telemetry if backend is unreachable
-  AUTO_FALLBACK_ON_ERROR: true
+  // Strict Phase 4 rule: Never introduce fake or fabricated live detection data
+  AUTO_FALLBACK_ON_ERROR: false
 };

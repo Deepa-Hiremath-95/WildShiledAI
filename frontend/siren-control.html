@@ -3,43 +3,101 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>WildShield AI | Siren Control & Acoustic Deterrence</title>
-    <meta name="description" content="Manage and trigger zone-specific acoustic deterrence sirens for wildlife intrusion prevention." />
+    <title>Siren Management | WildShield AI</title>
+    <meta name="description" content="Village-specific acoustic deterrence profiles, 90-second cooldown monitor, and manual emergency stop control." />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <div class="app-shell">
       <div class="main-panel">
         <main class="dashboard-grid siren-page">
-          <div class="siren-cards-container" data-role="siren-grid" style="display: contents;">
-            <section class="glass-card panel-card siren-panel emergency">
-              <div class="siren-card-head">
+
+          <!-- Global Acoustic Status & Emergency Stop Banner -->
+          <section class="main-dashboard-grid" style="grid-template-columns: 1fr; margin-bottom: -10px;">
+            <article class="glass-card panel-card" style="padding: 20px 24px; border-left: 5px solid #15803D;" id="smMasterSirenBanner">
+              <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
                 <div>
-                  <p class="eyebrow">Loading</p>
-                  <h3>sirens…</h3>
+                  <div style="display: flex; gap: 8px; align-items: center;">
+                    <span style="font-size: 20px;">🔔</span>
+                    <strong style="font-size: 16px; color: var(--text);">ACOUSTIC SIREN DETERRENCE SYSTEM (MODULE 9)</strong>
+                    <span class="status-pill online" id="smGlobalStatusPill">STANDBY (SAFE)</span>
+                  </div>
+                  <p style="margin: 6px 0 0; font-size: 13px; color: var(--text-secondary); max-width: 820px;">
+                    Zone-isolated deterrence system. Sirens activate <strong>strictly for confirmed animal intrusions</strong> in the designated village perimeter. Human intrusions are strictly non-acoustic.
+                  </p>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                  <button class="btn btn-outline" id="smRefreshBtn">↻ Refresh Status</button>
+                  <button class="btn btn-primary" id="smGlobalHaltBtn" style="background: var(--critical-red); border-color: var(--critical-red);">
+                    HALT ALL SIRENS (EMERGENCY STOP)
+                  </button>
                 </div>
               </div>
+            </article>
+          </section>
+
+          <!-- Metric Cards: Cooldown & Activation Status -->
+          <section class="summary-grid">
+            <article class="glass-card stat-card highlight">
+              <p>Active Siren State</p>
+              <h3 id="smActiveCountDisplay">0 Active</h3>
+              <span class="trend up" id="smActiveVillageLabel">All Zones Normal</span>
+            </article>
+
+            <!-- 90s Cooldown Monitor -->
+            <article class="glass-card stat-card" style="border-left: 4px solid #D97706;">
+              <p>Animal Siren Cooldown</p>
+              <h3 id="smCooldownStateDisplay">READY (0s)</h3>
+              <span class="trend neutral" id="smCooldownDetails">90s Window • Idle</span>
+            </article>
+
+            <article class="glass-card stat-card">
+              <p>Auto-Off Duration</p>
+              <h3>45 Seconds</h3>
+              <span class="trend neutral">Automatic Cut-Off</span>
+            </article>
+
+            <article class="glass-card stat-card">
+              <p>Acoustic Policy</p>
+              <h3 style="color: var(--info-blue);">LOCKED</h3>
+              <span class="trend up">Humans Never Trigger Siren</span>
+            </article>
+          </section>
+
+          <!-- Village-Specific Siren Profiles Grid (Module 9) -->
+          <div class="siren-cards-container" data-role="siren-grid" style="display: contents;">
+            <!-- Dynamically populated by script.js with Village A & Village B cards -->
+            <section class="glass-card panel-card" style="grid-column: 1 / -1; padding: 32px; text-align: center; color: var(--text-secondary);">
+              Loading village-specific siren units and acoustic profiles…
             </section>
           </div>
 
+          <!-- Explanatory Architecture & Operational History -->
           <section class="glass-card panel-card explanation-card">
             <div class="card-heading">
               <div>
-                <p class="eyebrow">Intelligent response</p>
-                <h3>Zone-specific alerting</h3>
+                <p class="eyebrow">Acoustic Engineering</p>
+                <h3>Village-Specific Sound Selection</h3>
               </div>
             </div>
-            <p class="explanation-text">
-              Only the affected zone's siren is activated to avoid unnecessary panic in safe villages.
-            </p>
-            <button class="btn btn-primary wide-btn" id="manualSirenTestBtn">Manual siren test</button>
+            <div style="display: flex; flex-direction: column; gap: 10px; font-size: 13px; color: var(--text-secondary); margin-top: 8px;">
+              <div style="padding: 10px 14px; background: #F8FAFC; border: 1px solid var(--border); border-radius: var(--radius-sm);">
+                <strong style="color: var(--text);">Village A Pattern:</strong> Three short beeps + one long beep (High-urgency frequency).
+              </div>
+              <div style="padding: 10px 14px; background: #F8FAFC; border: 1px solid var(--border); border-radius: var(--radius-sm);">
+                <strong style="color: var(--text);">Village B Pattern:</strong> Two long beeps + two short beeps (Buffer corridor tone).
+              </div>
+              <p style="margin: 4px 0 0;">
+                Isolated sound profiles allow forest villagers to identify the exact perimeter zone under threat without false alarm spillover.
+              </p>
+            </div>
           </section>
 
           <section class="glass-card panel-card history-card">
             <div class="card-heading">
               <div>
-                <p class="eyebrow">Operational log</p>
-                <h3>Siren history</h3>
+                <p class="eyebrow">Audit Log</p>
+                <h3>Recent Activation History</h3>
               </div>
             </div>
             <div class="history-list" data-role="siren-history-list">
@@ -52,18 +110,20 @@
                 <strong data-role="siren-history-reason">--</strong>
               </div>
               <div>
-                <span>Current connection status</span>
-                <strong data-role="siren-history-status">Simulated Relay Mode • Software Mock (GPIO Hardware Offline)</strong>
+                <span>Controller Hardware Mode</span>
+                <strong data-role="siren-history-status">Laptop Speaker Audio (winsound) / Simulated Relay</strong>
               </div>
             </div>
           </section>
+
         </main>
       </div>
     </div>
 
+    <!-- Scripts -->
     <script src="config.js"></script>
-    <script src="layout.js"></script>
     <script src="api-service.js"></script>
+    <script src="layout.js"></script>
     <script src="script.js"></script>
   </body>
 </html>

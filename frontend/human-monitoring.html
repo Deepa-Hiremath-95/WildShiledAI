@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Human Intrusion Monitoring | WildShield AI</title>
+    <meta name="description" content="Dedicated monitoring of human activity and restricted-zone incursions with discreet notification protocol." />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <div class="main-panel">
+        <main class="dashboard-grid">
+
+          <!-- Critical Protocol Safety Banner -->
+          <section class="main-dashboard-grid" style="grid-template-columns: 1fr; margin-bottom: -10px;">
+            <article class="glass-card panel-card" style="border-left: 5px solid #2563EB; background: #F8FAFC; padding: 18px 22px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                <div>
+                  <div style="display: flex; gap: 8px; align-items: center;">
+                    <span style="font-size: 18px;">🛡️</span>
+                    <strong style="font-size: 15px; color: var(--text);">HUMAN INTRUSION SAFETY PROTOCOL (MODULE 6)</strong>
+                  </div>
+                  <p style="margin: 6px 0 0; font-size: 13px; color: var(--text-secondary); max-width: 820px;">
+                    Per WildShield AI safety architecture, human detections trigger <code>HUMAN_NOTIFICATION_REQUIRED</code> for discreet ranger and forest authority response. <strong>Animal acoustic sirens are NEVER activated for human detections</strong> to prevent panic, community tension, or false wildlife alarm. Human detections bypass ongoing animal cooldowns and are logged independently.
+                  </p>
+                </div>
+                <div>
+                  <span class="status-pill online" style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-weight: 700;">
+                    SIREN MUTED (DISCREET DISPATCH ONLY)
+                  </span>
+                </div>
+              </div>
+            </article>
+          </section>
+
+          <!-- Human Intrusion Metrics Header -->
+          <section class="summary-grid">
+            <article class="glass-card stat-card highlight">
+              <p>Total Human Detections</p>
+              <h3 id="hmTotalHumanCount">--</h3>
+              <span class="trend neutral">Audit Trail</span>
+            </article>
+            <article class="glass-card stat-card">
+              <p>Restricted Zone Events</p>
+              <h3 id="hmRestrictedZoneCount" style="color: var(--warning-amber);">--</h3>
+              <span class="trend up">Core Reserve (Zone C)</span>
+            </article>
+            <article class="glass-card stat-card">
+              <p>Boundary Fringe Activity</p>
+              <h3 id="hmBoundaryCount">--</h3>
+              <span class="trend neutral">Village Buffer Corridors</span>
+            </article>
+            <article class="glass-card stat-card">
+              <p>Notification State</p>
+              <h3 style="color: var(--primary-green);">DISCREET</h3>
+              <span class="trend up">Rangers Notified</span>
+            </article>
+          </section>
+
+          <!-- Human Event History Table -->
+          <section class="lower-grid" style="grid-template-columns: 1fr;">
+            <article class="glass-card panel-card table-card">
+              <div class="card-heading" style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <p class="eyebrow">Discreet Audit Stream • Module 6</p>
+                  <h3>Human Activity History & Dispatch Records</h3>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                  <button class="btn btn-outline btn-sm" id="hmRefreshBtn">↻ Refresh Records</button>
+                </div>
+              </div>
+
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Timestamp</th>
+                      <th>Class Name</th>
+                      <th>Confidence</th>
+                      <th>Reporting Camera</th>
+                      <th>Village</th>
+                      <th>Monitoring Zone</th>
+                      <th>Risk Level</th>
+                      <th>Notification Status</th>
+                      <th>Acoustic Siren Status</th>
+                      <th>Discreet Action Taken</th>
+                    </tr>
+                  </thead>
+                  <tbody id="hmHumanTableBody">
+                    <tr>
+                      <td colspan="10" style="text-align: center; color: var(--text-secondary); padding: 24px;">
+                        Loading human intrusion history from backend…
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </article>
+          </section>
+
+        </main>
+      </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="config.js"></script>
+    <script src="api-service.js"></script>
+    <script src="layout.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>
+

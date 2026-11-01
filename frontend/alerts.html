@@ -3,41 +3,113 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>WildShield AI | Alerts & Incident Management</title>
-    <meta name="description" content="Real-time incident management, human-wildlife conflict alerts, and emergency response dispatch." />
+    <title>Alert Management | WildShield AI</title>
+    <meta name="description" content="Real-time incident triage, threat classification, alert history and multi-criteria filtering." />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <div class="app-shell">
       <div class="main-panel">
-
         <main class="dashboard-grid alerts-page">
-          <section class="glass-card panel-card filter-card">
-            <div class="card-heading">
+
+          <!-- Alert Metric Summary Cards -->
+          <section class="summary-grid">
+            <article class="glass-card stat-card highlight">
+              <p>Active Incidents</p>
+              <h3 id="almActiveCount">--</h3>
+              <span class="trend up">Requires Operator Action</span>
+            </article>
+            <article class="glass-card stat-card">
+              <p>Critical / High Threat</p>
+              <h3 id="almCriticalCount" style="color: var(--critical-red);">--</h3>
+              <span class="trend up">Immediate Settlement Risk</span>
+            </article>
+            <article class="glass-card stat-card">
+              <p>Resolved Incidents</p>
+              <h3 id="almResolvedCount" style="color: var(--primary-green);">--</h3>
+              <span class="trend neutral">Successfully Handled</span>
+            </article>
+            <article class="glass-card stat-card">
+              <p>Unread / Pending</p>
+              <h3 id="almUnreadCount">--</h3>
+              <span class="trend neutral">Awaiting Acknowledgement</span>
+            </article>
+          </section>
+
+          <!-- Advanced Multi-Criteria Filter Bar (Module 7) -->
+          <section class="glass-card panel-card filter-card" style="padding: 18px 20px;">
+            <div class="card-heading" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
               <div>
-                <p class="eyebrow">Alert stream</p>
-                <h3>Active alert filters</h3>
+                <p class="eyebrow">Incident Triage Controls • Module 7</p>
+                <h3>Filter Alerts & Incidents</h3>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn btn-outline btn-sm" id="almMarkAllReadBtn">✓ Mark All Acknowledged</button>
+                <button class="btn btn-outline btn-sm" id="almRefreshBtn">↻ Refresh</button>
               </div>
             </div>
-            <div class="filter-buttons">
-              <button class="filter-btn active">All</button>
-              <button class="filter-btn">Low</button>
-              <button class="filter-btn">Medium</button>
-              <button class="filter-btn">High</button>
-              <button class="filter-btn">Critical</button>
-              <button class="filter-btn">Active</button>
-              <button class="filter-btn">Resolved</button>
+
+            <div style="display: flex; flex-wrap: wrap; gap: 14px; align-items: center;">
+              <!-- Status Filter Buttons -->
+              <div class="filter-buttons" style="display: flex; gap: 6px;">
+                <button class="filter-btn active" data-status="all">All Alerts</button>
+                <button class="filter-btn" data-status="active">Active Only</button>
+                <button class="filter-btn" data-status="resolved">Resolved Only</button>
+                <button class="filter-btn" data-status="unread">Unread Only</button>
+              </div>
+
+              <!-- Village Filter -->
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">Village:</label>
+                <select id="almVillageFilter" style="padding: 6px 10px; font-size: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--panel);">
+                  <option value="all">All Villages</option>
+                  <option value="Village 1">Village 1</option>
+                  <option value="Village 2">Village 2</option>
+                  <option value="Core Reserve">Core Reserve</option>
+                </select>
+              </div>
+
+              <!-- Species Filter -->
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">Species / Threat:</label>
+                <select id="almSpeciesFilter" style="padding: 6px 10px; font-size: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--panel);">
+                  <option value="all">All Species</option>
+                  <option value="Elephant">Elephant</option>
+                  <option value="Leopard">Leopard</option>
+                  <option value="Deer">Deer</option>
+                  <option value="Wild Boar">Wild Boar</option>
+                  <option value="Human">Human Intrusion</option>
+                </select>
+              </div>
+
+              <!-- Date Filter -->
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">Timeframe:</label>
+                <select id="almDateFilter" style="padding: 6px 10px; font-size: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--panel);">
+                  <option value="all">All Recorded History</option>
+                  <option value="today">Today (Last 24 Hours)</option>
+                  <option value="week">Past 7 Days</option>
+                  <option value="month">Past 30 Days</option>
+                </select>
+              </div>
             </div>
           </section>
 
-          <section class="alerts-list" data-role="alert-list"></section>
+          <!-- Alert Cards Stream -->
+          <section class="alerts-list" data-role="alert-list" id="almAlertsListContainer">
+            <div style="padding: 40px; text-align: center; color: var(--text-secondary); background: white; border-radius: var(--radius-md); border: 1px solid var(--border);">
+              Loading real incident alerts from backend…
+            </div>
+          </section>
+
         </main>
       </div>
     </div>
 
+    <!-- Scripts -->
     <script src="config.js"></script>
-    <script src="layout.js"></script>
     <script src="api-service.js"></script>
+    <script src="layout.js"></script>
     <script src="script.js"></script>
   </body>
 </html>

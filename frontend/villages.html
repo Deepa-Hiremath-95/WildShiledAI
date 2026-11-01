@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Village Management | WildShield AI</title>
+    <meta name="description" content="Manage demonstration villages, monitoring zones, registered cameras and acoustic siren profiles." />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <div class="main-panel">
+        <main class="dashboard-grid">
+
+          <!-- Village Management Metrics Header -->
+          <section class="summary-grid">
+            <article class="glass-card stat-card highlight">
+              <p>Registered Villages</p>
+              <h3 id="vmTotalVillagesCount">--</h3>
+              <span class="trend up">Configured Zones</span>
+            </article>
+            <article class="glass-card stat-card">
+              <p>Villages At Risk</p>
+              <h3 id="vmAtRiskVillagesCount" style="color: var(--critical-red);">--</h3>
+              <span class="trend neutral">Active Threat Corridors</span>
+            </article>
+            <article class="glass-card stat-card">
+              <p>Active Monitoring Zones</p>
+              <h3 id="vmTotalZonesCount">--</h3>
+              <span class="trend up">Forest Boundary Buffers</span>
+            </article>
+            <article class="glass-card stat-card">
+              <p>Assigned Siren Units</p>
+              <h3 id="vmSirensCount">--</h3>
+              <span class="trend up">Village A & B Acoustic Profiles</span>
+            </article>
+          </section>
+
+          <!-- Village Cards Grid & Management Actions -->
+          <section class="main-dashboard-grid" style="grid-template-columns: 1fr;">
+            <article class="glass-card panel-card">
+              <div class="card-heading" style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <p class="eyebrow">Settlement Infrastructure • Module 1 & 3</p>
+                  <h3>Registered Demonstration Villages</h3>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                  <button class="btn btn-outline btn-sm" id="vmRefreshBtn">↻ Refresh Villages</button>
+                  <button class="btn btn-primary btn-sm" id="vmOpenRegisterModalBtn">+ Register New Village</button>
+                </div>
+              </div>
+
+              <!-- Village Cards Display -->
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; margin-top: 16px;" id="vmVillageCardsGrid">
+                <div style="padding: 32px; text-align: center; color: var(--text-secondary); grid-column: 1 / -1;">
+                  Loading registered villages and monitoring zones…
+                </div>
+              </div>
+            </article>
+          </section>
+
+          <!-- Village Directory & Camera Association Table -->
+          <section class="lower-grid" style="grid-template-columns: 1fr;">
+            <article class="glass-card panel-card table-card">
+              <div class="card-heading">
+                <div>
+                  <p class="eyebrow">Inventory Matrix</p>
+                  <h3>Village, Zone & Camera Association Directory</h3>
+                </div>
+              </div>
+
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Village ID</th>
+                      <th>Village Name</th>
+                      <th>Zone ID</th>
+                      <th>Zone Classification</th>
+                      <th>Assigned Cameras</th>
+                      <th>Siren Pattern & Acoustic Profile</th>
+                      <th>Confidence Floor</th>
+                      <th>Cooldown Window</th>
+                      <th>Safety Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="vmVillageTableBody">
+                    <tr>
+                      <td colspan="9" style="text-align: center; color: var(--text-secondary); padding: 24px;">
+                        Loading village configuration directory…
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </article>
+          </section>
+
+        </main>
+      </div>
+    </div>
+
+    <!-- Register Village Modal -->
+    <div class="modal-overlay" id="vmRegisterModal" style="display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.6); z-index: 1000; align-items: center; justify-content: center;">
+      <div class="modal-box glass-card" style="background: white; border-radius: var(--radius-lg); max-width: 520px; width: 90%; padding: 24px; box-shadow: var(--shadow-lg);">
+        <div class="card-heading" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 16px;">
+          <div>
+            <p class="eyebrow">Settlement Registration</p>
+            <h3 style="margin: 0;">Register New Village / Zone</h3>
+          </div>
+          <button class="icon-btn modal-close" id="vmCloseModalBtn" style="border: none; background: transparent; font-size: 20px; cursor: pointer;">&times;</button>
+        </div>
+
+        <form id="vmRegisterVillageForm">
+          <div style="display: flex; flex-direction: column; gap: 14px;">
+            <div>
+              <label style="font-size: 12px; font-weight: 600; color: var(--text); display: block; margin-bottom: 4px;">Village / Zone Name *</label>
+              <input type="text" id="vmInputName" placeholder="e.g. Village C — Zone D" required style="width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm);" />
+            </div>
+
+            <div>
+              <label style="font-size: 12px; font-weight: 600; color: var(--text); display: block; margin-bottom: 4px;">Zone Type *</label>
+              <select id="vmInputType" required style="width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: white;">
+                <option value="animal">Animal Zone (Forest Boundary / Perimeter)</option>
+                <option value="restricted">Restricted Zone (Core Reserve / Patrol Only)</option>
+              </select>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+              <div>
+                <label style="font-size: 12px; font-weight: 600; color: var(--text); display: block; margin-bottom: 4px;">Latitude</label>
+                <input type="number" step="0.001" id="vmInputLat" placeholder="11.685" value="11.685" style="width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm);" />
+              </div>
+              <div>
+                <label style="font-size: 12px; font-weight: 600; color: var(--text); display: block; margin-bottom: 4px;">Longitude</label>
+                <input type="number" step="0.001" id="vmInputLng" placeholder="76.620" value="76.620" style="width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm);" />
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+              <div>
+                <label style="font-size: 12px; font-weight: 600; color: var(--text); display: block; margin-bottom: 4px;">Confidence Threshold</label>
+                <input type="number" step="0.05" min="0.5" max="0.95" id="vmInputConfidence" value="0.60" style="width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm);" />
+              </div>
+              <div>
+                <label style="font-size: 12px; font-weight: 600; color: var(--text); display: block; margin-bottom: 4px;">Alert Cooldown (sec)</label>
+                <input type="number" id="vmInputCooldown" value="90" style="width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm);" />
+              </div>
+            </div>
+
+            <div style="margin-top: 10px; display: flex; justify-content: flex-end; gap: 10px;">
+              <button type="button" class="btn btn-outline" id="vmCancelBtn">Cancel</button>
+              <button type="submit" class="btn btn-primary" id="vmSubmitBtn">Register Village</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="config.js"></script>
+    <script src="api-service.js"></script>
+    <script src="layout.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>
+

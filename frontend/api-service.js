@@ -530,6 +530,59 @@
       const qs = zoneId ? `?zone_id=${encodeURIComponent(zoneId)}` : '';
       return this.request(`/cameras${qs}`);
     },
+    async createCamera(data) {
+      return this.request("/cameras", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+    },
+    async sendCameraHeartbeat(cameraId) {
+      return this.request("/cameras/" + encodeURIComponent(cameraId) + "/heartbeat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ is_online: true })
+      });
+    },
+    async createVillage(data) {
+      return this.request("/zones", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+    },
+    async updateVillage(villageId, data) {
+      return this.request("/zones/" + encodeURIComponent(villageId), {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+    },
+    async deleteVillage(villageId) {
+      return this.request("/zones/" + encodeURIComponent(villageId), {
+        method: "DELETE"
+      });
+    },
+    async getAlertsHistory(zoneId, limit = 50) {
+      const qs = zoneId ? ("?zone_id=" + encodeURIComponent(zoneId) + "&limit=" + limit) : ("?limit=" + limit);
+      return this.request("/alerts" + qs);
+    },
+    async updateZoneThresholds(zoneId, data) {
+      return this.request("/zones/" + encodeURIComponent(zoneId), {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+    },
+    async autoLoginDefaultAdmin() {
+      if (this.isAuthenticated()) return true;
+      try {
+        await this.login("admin", "changeme123");
+        return true;
+      } catch (_) {
+        return false;
+      }
+    },
     async postDetection(payload) {
       return this.request('/detections', {
         method: 'POST',

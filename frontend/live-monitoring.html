@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Live Monitoring | WildShield AI</title>
+    <meta name="description" content="Real-time surveillance feeds, detected species, human intrusions and instant telemetry." />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <div class="main-panel">
+        <main class="dashboard-grid">
+
+          <!-- Real-Time Monitoring Controls & Camera Selector -->
+          <section class="summary-grid compact-grid">
+            <article class="glass-card stat-card">
+              <p>Active Camera</p>
+              <h3 id="lmActiveCamDisplay">CAM-001</h3>
+              <span class="trend neutral">Village A (Laptop Webcam)</span>
+            </article>
+            <article class="glass-card stat-card">
+              <p>Inference Rate</p>
+              <h3 id="lmFpsDisplay">2.0 FPS</h3>
+              <span class="trend up">Rate-limit safe</span>
+            </article>
+            <article class="glass-card stat-card">
+              <p>Latest Species</p>
+              <h3 id="lmLatestSpeciesDisplay">--</h3>
+              <span class="trend neutral" id="lmLatestConfDisplay">Confidence: --</span>
+            </article>
+            <article class="glass-card stat-card">
+              <p>Monitoring Stream</p>
+              <h3 id="lmStreamStateDisplay">ARMED</h3>
+              <span class="trend up">YOLOv11 Active</span>
+            </article>
+          </section>
+
+          <!-- Primary Live Surveillance Grid -->
+          <section class="main-dashboard-grid">
+            <!-- Video / Feed Preview Card -->
+            <article class="glass-card panel-card live-feed-card" style="grid-column: span 2;">
+              <div class="card-heading">
+                <div>
+                  <p class="eyebrow">Real-Time Sensor Feed • YOLOv11 Workflow</p>
+                  <h3 id="lmFeedHeading">CAM-001 CAMERA FEED</h3>
+                </div>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                  <select id="lmCameraSelect" style="padding: 6px 10px; font-size: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--panel);">
+                    <option value="CAM-001">CAM-001: Village A Test</option>
+                    <option value="CAM-002">CAM-002: Village B Perimeter</option>
+                    <option value="CAM-003">CAM-003: Core Reserve Access</option>
+                  </select>
+                  <span class="status-pill online" id="lmFeedPill">● LIVE INFERENCE</span>
+                </div>
+              </div>
+
+              <div class="feed-visual" style="min-height: 380px; position: relative;">
+                <!-- Simulated / Real Snapshot Stream Overlay -->
+                <div class="feed-overlay" data-role="live-feed" style="position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: 24px; background: linear-gradient(180deg, rgba(15,23,42,0.1) 0%, rgba(15,23,42,0.85) 100%); border-radius: var(--radius-md);">
+                  <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+                    <div>
+                      <span class="feed-badge" id="lmLatestBadge" style="background: var(--critical-red); color: white; padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 12px;">Waiting for detections…</span>
+                      <h4 id="lmLatestTitle" style="color: white; margin: 8px 0 4px; font-size: 20px;">Standby Mode</h4>
+                      <p id="lmLatestDetails" style="color: #CBD5E1; margin: 0; font-size: 13px;">Camera: CAM-001 | Zone: Forest Boundary | Village: Village A</p>
+                    </div>
+                    <div style="text-align: right; color: white;">
+                      <div id="lmLatestTime" style="font-size: 13px; font-weight: 600;">--:--:-- UTC</div>
+                      <div id="lmLatestRiskBadge" style="margin-top: 4px;"><span class="status-pill online">NORMAL</span></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Stream Controls Bar -->
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border);">
+                <div style="display: flex; gap: 8px;">
+                  <button class="btn btn-outline btn-sm" id="lmRefreshBtn">↻ Refresh Feed</button>
+                  <button class="btn btn-outline btn-sm" id="lmAutoRefreshToggle">Auto-Refresh: ON (3s)</button>
+                </div>
+                <div style="font-size: 12px; color: var(--text-secondary);">
+                  Rule Engine: <strong style="color: var(--text);">Phase 2/3 Integrated</strong> | Rate Floor: <strong>60%</strong>
+                </div>
+              </div>
+            </article>
+
+            <!-- Latest Telemetry & Quick Response Card -->
+            <article class="glass-card panel-card alert-card">
+              <div class="card-heading">
+                <div>
+                  <p class="eyebrow">Real-Time Incident Triage</p>
+                  <h3>LATEST EVENT</h3>
+                </div>
+              </div>
+              <div class="alert-body" id="lmLargeAlertBody">
+                <p>Connecting to backend detection stream…</p>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 16px;">
+                <button class="btn btn-primary wide-btn" id="lmStopSirenBtn" style="background: var(--critical-red);">
+                  HALT SIREN (MANUAL STOP)
+                </button>
+                <a href="alerts.html" class="btn btn-outline wide-btn" style="text-align: center; text-decoration: none;">
+                  View All Alerts
+                </a>
+              </div>
+            </article>
+          </section>
+
+          <!-- Chronological Live Detection Stream Table -->
+          <section class="lower-grid" style="grid-template-columns: 1fr;">
+            <article class="glass-card panel-card table-card">
+              <div class="card-heading" style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <p class="eyebrow">Audit Stream</p>
+                  <h3>Live Detection History</h3>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                  <button class="btn btn-outline btn-sm active" data-filter="all" id="lmFilterAll">All Events</button>
+                  <button class="btn btn-outline btn-sm" data-filter="animal" id="lmFilterAnimal">Animals Only</button>
+                  <button class="btn btn-outline btn-sm" data-filter="human" id="lmFilterHuman">Humans Only</button>
+                </div>
+              </div>
+
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Timestamp</th>
+                      <th>Class / Species</th>
+                      <th>Type</th>
+                      <th>Confidence</th>
+                      <th>Camera ID</th>
+                      <th>Village</th>
+                      <th>Monitoring Zone</th>
+                      <th>Risk Level</th>
+                      <th>Siren / Notification State</th>
+                    </tr>
+                  </thead>
+                  <tbody id="lmDetectionsTableBody">
+                    <tr>
+                      <td colspan="9" style="text-align: center; color: var(--text-secondary); padding: 24px;">
+                        Loading live detection feed from backend…
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </article>
+          </section>
+
+        </main>
+      </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="config.js"></script>
+    <script src="api-service.js"></script>
+    <script src="layout.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>
+

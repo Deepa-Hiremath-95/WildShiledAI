@@ -15,6 +15,34 @@
       <div class="main-panel">
 
         <main class="dashboard-grid">
+          <!-- Overview Operational KPIs (Module 1) -->
+          <section class="overview-kpis-grid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap:16px; margin-bottom: 20px;">
+            <div class="card stat-card" style="padding:16px; background:var(--panel-card); border:1px solid var(--border); border-radius:var(--radius-md);">
+              <div style="font-size:11px; color:var(--text-secondary); text-transform:uppercase; font-weight:700; letter-spacing:0.04em;">Total Detections</div>
+              <div id="ovTotalDetections" style="font-size:26px; font-weight:700; color:var(--text); margin-top:4px;">--</div>
+              <div style="font-size:11px; color:var(--muted); margin-top:2px;">All species &amp; intrusion events</div>
+            </div>
+            <div class="card stat-card" style="padding:16px; background:var(--panel-card); border:1px solid var(--border); border-radius:var(--radius-md);">
+              <div style="font-size:11px; color:var(--text-secondary); text-transform:uppercase; font-weight:700; letter-spacing:0.04em;">Active Alerts</div>
+              <div id="ovActiveAlerts" style="font-size:26px; font-weight:700; color:var(--danger); margin-top:4px;">--</div>
+              <div style="font-size:11px; color:var(--muted); margin-top:2px;">Unresolved perimeter threats</div>
+            </div>
+            <div class="card stat-card" style="padding:16px; background:var(--panel-card); border:1px solid var(--border); border-radius:var(--radius-md);">
+              <div style="font-size:11px; color:var(--text-secondary); text-transform:uppercase; font-weight:700; letter-spacing:0.04em;">Registered Villages</div>
+              <div id="ovVillagesCount" style="font-size:26px; font-weight:700; color:var(--primary); margin-top:4px;">--</div>
+              <div style="font-size:11px; color:var(--muted); margin-top:2px;">Village A, Village B configured</div>
+            </div>
+            <div class="card stat-card" style="padding:16px; background:var(--panel-card); border:1px solid var(--border); border-radius:var(--radius-md);">
+              <div style="font-size:11px; color:var(--text-secondary); text-transform:uppercase; font-weight:700; letter-spacing:0.04em;">Connected Cameras</div>
+              <div id="ovConnectedCameras" style="font-size:26px; font-weight:700; color:var(--success); margin-top:4px;">--</div>
+              <div style="font-size:11px; color:var(--muted); margin-top:2px;">CAM-001 (Laptop Webcam)</div>
+            </div>
+            <div class="card stat-card" style="padding:16px; background:var(--panel-card); border:1px solid var(--border); border-radius:var(--radius-md);">
+              <div style="font-size:11px; color:var(--text-secondary); text-transform:uppercase; font-weight:700; letter-spacing:0.04em;">High-Risk Events</div>
+              <div id="ovHighRiskEvents" style="font-size:26px; font-weight:700; color:#D97706; margin-top:4px;">--</div>
+              <div style="font-size:11px; color:var(--muted); margin-top:2px;">Critical / High incursions</div>
+            </div>
+          </section>
           <section class="summary-grid" data-role="village-grid">
             <article class="glass-card stat-card highlight">
               <p>Loading villages…</p>

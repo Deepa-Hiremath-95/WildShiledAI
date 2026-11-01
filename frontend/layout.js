@@ -11,81 +11,124 @@
   const currentPath = rawPath;
 
   const pages = {
-    'index.html': { title: 'WildShield AI Command Center', subtitle: 'AI-Powered Early Warning System for Human–Wildlife Conflict Zones' },
-    'map-view.html': { title: 'Map View', subtitle: 'Live wildlife intrusion & perimeter monitoring' },
-    'alerts.html': { title: 'Alerts', subtitle: 'Real-time incident management & dispatch' },
-    'siren-control.html': { title: 'Siren Control', subtitle: 'Intelligent zone-specific acoustic deterrence' },
-    'analytics.html': { title: 'Analytics', subtitle: 'Operational insights, intrusion trends & detection statistics' },
-    'notifications.html': { title: 'Notifications', subtitle: 'Live event stream and security audit notifications' },
-    'profile.html': { title: 'Operator Profile', subtitle: 'Manage operator credentials and regional access' },
-    'security.html': { title: 'Security Settings', subtitle: 'Authentication security, authorized devices & audit log' }
+    'index.html': { title: 'WildShield AI Command Center', subtitle: 'Executive overview, active wildlife alerts & camera telemetry' },
+    'live-monitoring.html': { title: 'Live Surveillance Monitoring', subtitle: 'Real-time camera feed, YOLOv11 bounding boxes & instant telemetry' },
+    'villages.html': { title: 'Village Management', subtitle: 'Configurable demonstration villages, zones & emergency contacts' },
+    'cameras.html': { title: 'Camera Network', subtitle: 'Edge camera nodes, heartbeat telemetry & monitoring zones' },
+    'animal-monitoring.html': { title: 'Animal Intrusion Monitoring', subtitle: 'Species-specific detection tracking (Elephant, Leopard, Deer, Wild Boar)' },
+    'human-monitoring.html': { title: 'Human Intrusion Monitoring', subtitle: 'Restricted-zone human tracking — Acoustic siren strictly disabled' },
+    'alerts.html': { title: 'Incident & Alert Management', subtitle: 'Real-time threat triage, operator acknowledgement & incident resolution' },
+    'analytics.html': { title: 'Analytics & Trends', subtitle: 'Detection frequency, species distribution, risk heatmaps & false-alarm audits' },
+    'siren-control.html': { title: 'Siren & Acoustic Management', subtitle: 'Village-specific acoustic patterns, 90s cooldown monitor & emergency stop' },
+    'settings.html': { title: 'System Settings', subtitle: 'Inference thresholds, cooldown parameters & notification routing' },
+    'map-view.html': { title: 'Geospatial Map View', subtitle: 'GIS perimeter mapping, conflict buffer zones & intrusion vectors' },
+    'profile.html': { title: 'Operator Profile', subtitle: 'Lead operator credentials and regional access' },
+    'security.html': { title: 'Security Settings', subtitle: 'Authentication security, authorized devices & audit log' },
+    'notifications.html': { title: 'System Notifications', subtitle: 'Live event stream and security audit notifications' }
   };
 
-  const navItems = [
+  const navSections = [
     {
-      href: 'index.html',
-      icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg>',
-      label: 'Dashboard'
+      label: 'OPERATIONS',
+      items: [
+        {
+          href: 'index.html',
+          icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg>',
+          label: 'Overview'
+        },
+        {
+          href: 'live-monitoring.html',
+          icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>',
+          label: 'Live Monitoring'
+        },
+        {
+          href: 'map-view.html',
+          icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>',
+          label: 'Perimeter Map'
+        }
+      ]
     },
     {
-      href: 'map-view.html',
-      icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>',
-      label: 'Map View'
+      label: 'DETECTION & THREATS',
+      items: [
+        {
+          href: 'animal-monitoring.html',
+          icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>',
+          label: 'Animal Monitoring'
+        },
+        {
+          href: 'human-monitoring.html',
+          icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+          label: 'Human Intrusion'
+        },
+        {
+          href: 'alerts.html',
+          icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+          label: 'Alert Management'
+        },
+        {
+          href: 'siren-control.html',
+          icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>',
+          label: 'Siren Management'
+        }
+      ]
     },
     {
-      href: 'alerts.html',
-      icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
-      label: 'Alerts'
+      label: 'INFRASTRUCTURE & DATA',
+      items: [
+        {
+          href: 'villages.html',
+          icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>',
+          label: 'Villages & Zones'
+        },
+        {
+          href: 'cameras.html',
+          icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/></svg>',
+          label: 'Camera Network'
+        },
+        {
+          href: 'analytics.html',
+          icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>',
+          label: 'Analytics'
+        }
+      ]
     },
     {
-      href: 'siren-control.html',
-      icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>',
-      label: 'Siren Control'
-    },
-    {
-      href: 'analytics.html',
-      icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>',
-      label: 'Analytics'
-    }
-  ];
-
-  const secondaryNavItems = [
-    {
-      href: 'profile.html',
-      icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
-      label: 'Operator Profile'
-    },
-    {
-      href: 'security.html',
-      icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
-      label: 'Security Settings'
+      label: 'SYSTEM',
+      items: [
+        {
+          href: 'settings.html',
+          icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
+          label: 'System Settings'
+        },
+        {
+          href: 'profile.html',
+          icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+          label: 'Operator Profile'
+        },
+        {
+          href: 'security.html',
+          icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
+          label: 'Security & 2FA'
+        }
+      ]
     }
   ];
 
   function buildSidebar() {
-    const navHtml = navItems
-      .map((item) => {
+    let sectionsHtml = '';
+    for (const section of navSections) {
+      sectionsHtml += `<div class="nav-group-label">${section.label}</div>`;
+      for (const item of section.items) {
         const isActive = item.href === currentPath || (currentPath === 'index.html' && item.href === 'index.html');
-        return `
+        sectionsHtml += `
           <a href="${item.href}" class="nav-item ${isActive ? 'active' : ''}">
             <span class="nav-icon" aria-hidden="true">${item.icon}</span>
             <span class="nav-label">${item.label}</span>
           </a>
         `;
-      })
-      .join('');
-
-    const secondaryNavHtml = secondaryNavItems
-      .map((item) => {
-        const isActive = item.href === currentPath;
-        return `
-          <a href="${item.href}" class="nav-item secondary ${isActive ? 'active' : ''}">
-            <span class="nav-icon" aria-hidden="true">${item.icon}</span>
-            <span class="nav-label">${item.label}</span>
-          </a>
-        `;
-      })
-      .join('');
+      }
+    }
 
     return `
       <aside class="sidebar" id="sidebar" aria-label="Main Navigation">
@@ -109,11 +152,7 @@
         </div>
 
         <nav class="sidebar-nav" aria-label="Primary Navigation">
-          <div class="nav-group-label">OPERATIONS</div>
-          ${navHtml}
-
-          <div class="nav-group-label" style="margin-top: 16px;">ADMINISTRATION</div>
-          ${secondaryNavHtml}
+          ${sectionsHtml}
         </nav>
 
         <div class="sidebar-footer">
@@ -123,7 +162,7 @@
               <p>System Health</p>
             </div>
             <strong id="sidebarHealthSummary">Loading health…</strong>
-            <span id="sidebarHealthDetails">Connecting to sensor network…</span>
+            <span id="sidebarHealthDetails">Connecting to backend…</span>
           </div>
         </div>
       </aside>

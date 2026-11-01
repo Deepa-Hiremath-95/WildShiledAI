@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Animal Monitoring | WildShield AI</title>
+    <meta name="description" content="Dedicated wildlife early warning tracker for Elephant, Leopard, Deer and Wild Boar incursions." />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <div class="main-panel">
+        <main class="dashboard-grid">
+
+          <!-- Species Breakdown Cards Header -->
+          <section class="summary-grid">
+            <!-- Elephant -->
+            <article class="glass-card stat-card" style="border-left: 4px solid #0284C7;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <p>Elephant Detections</p>
+                <span style="font-size: 18px;">🐘</span>
+              </div>
+              <h3 id="amElephantCount">--</h3>
+              <span class="trend up" id="amElephantRisk">High Threat • Siren Enabled</span>
+            </article>
+
+            <!-- Leopard -->
+            <article class="glass-card stat-card" style="border-left: 4px solid #9333EA;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <p>Leopard Detections</p>
+                <span style="font-size: 18px;">🐆</span>
+              </div>
+              <h3 id="amLeopardCount">--</h3>
+              <span class="trend up" id="amLeopardRisk">Apex Predator • Siren Enabled</span>
+            </article>
+
+            <!-- Deer -->
+            <article class="glass-card stat-card" style="border-left: 4px solid #16A34A;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <p>Deer Detections</p>
+                <span style="font-size: 18px;">🦌</span>
+              </div>
+              <h3 id="amDeerCount">--</h3>
+              <span class="trend neutral" id="amDeerRisk">Crop Grazing Risk</span>
+            </article>
+
+            <!-- Wild Boar -->
+            <article class="glass-card stat-card" style="border-left: 4px solid #EA580C;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <p>Wild Boar Detections</p>
+                <span style="font-size: 18px;">🐗</span>
+              </div>
+              <h3 id="amBoarCount">--</h3>
+              <span class="trend up" id="amBoarRisk">Agricultural Incursion</span>
+            </article>
+          </section>
+
+          <!-- Filter & Search Toolbar -->
+          <section class="main-dashboard-grid" style="grid-template-columns: 1fr;">
+            <article class="glass-card panel-card" style="padding: 16px 20px;">
+              <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px;">
+                <div style="display: flex; gap: 8px; align-items: center;">
+                  <strong style="font-size: 13px; color: var(--text);">Filter Species:</strong>
+                  <button class="btn btn-outline btn-sm active" data-species="all" id="amBtnAll">All Wildlife</button>
+                  <button class="btn btn-outline btn-sm" data-species="Elephant" id="amBtnElephant">Elephant</button>
+                  <button class="btn btn-outline btn-sm" data-species="Leopard" id="amBtnLeopard">Leopard</button>
+                  <button class="btn btn-outline btn-sm" data-species="Deer" id="amBtnDeer">Deer</button>
+                  <button class="btn btn-outline btn-sm" data-species="Wild_boar" id="amBtnBoar">Wild Boar</button>
+                </div>
+
+                <div style="display: flex; gap: 10px; align-items: center;">
+                  <select id="amRiskFilter" style="padding: 6px 10px; font-size: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--panel);">
+                    <option value="all">All Risk Levels</option>
+                    <option value="critical">Critical</option>
+                    <option value="high">High</option>
+                    <option value="medium">Medium</option>
+                    <option value="low">Low</option>
+                  </select>
+
+                  <select id="amVillageFilter" style="padding: 6px 10px; font-size: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--panel);">
+                    <option value="all">All Villages</option>
+                  </select>
+
+                  <button class="btn btn-outline btn-sm" id="amRefreshBtn">↻ Refresh</button>
+                </div>
+              </div>
+            </article>
+          </section>
+
+          <!-- Animal Intrusion Activity Table -->
+          <section class="lower-grid" style="grid-template-columns: 1fr;">
+            <article class="glass-card panel-card table-card">
+              <div class="card-heading" style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <p class="eyebrow">Wildlife Audit Stream • Module 5</p>
+                  <h3>Animal Detection History & Siren Cooldown Records</h3>
+                </div>
+                <div style="font-size: 12px; color: var(--text-secondary);">
+                  Rule Engine: <strong style="color: var(--text);">Animal Siren 90s Cooldown Active</strong>
+                </div>
+              </div>
+
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Timestamp</th>
+                      <th>Species</th>
+                      <th>Confidence Score</th>
+                      <th>Reporting Camera</th>
+                      <th>Affected Village</th>
+                      <th>Monitoring Zone</th>
+                      <th>Movement Direction</th>
+                      <th>Risk Level</th>
+                      <th>Siren Playback Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="amAnimalTableBody">
+                    <tr>
+                      <td colspan="9" style="text-align: center; color: var(--text-secondary); padding: 24px;">
+                        Loading animal detections from backend…
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </article>
+          </section>
+
+        </main>
+      </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="config.js"></script>
+    <script src="api-service.js"></script>
+    <script src="layout.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>
+

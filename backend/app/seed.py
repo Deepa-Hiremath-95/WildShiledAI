@@ -115,6 +115,15 @@ def run(reset: bool = False):
             )
             db.add(cam3)
 
+        # Ensure Phase 2/3 test cameras (CAM-001, CAM-002, CAM-003) exist for live webcam & pipeline testing
+        for cid, zid, cname, src in [
+            ("CAM-001", village1.id, "Laptop Webcam (Village A Test)", "0"),
+            ("CAM-002", village2.id, "Village B Perimeter Camera", "1"),
+            ("CAM-003", restricted.id, "Core Reserve Access Cam", "2"),
+        ]:
+            if not db.query(models.Camera).filter(models.Camera.id == cid).first():
+                db.add(models.Camera(id=cid, zone_id=zid, name=cname, stream_source=src, is_online=True, last_heartbeat=now))
+
         db.flush()
 
         # 3. Contacts

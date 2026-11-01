@@ -3,31 +3,73 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>WildShield AI | Analytics & Operational Trends</title>
+    <title>Analytics & Operational Trends | WildShield AI</title>
     <meta name="description" content="Wildlife intrusion detection statistics, human activity trends, risk distribution, and siren metrics." />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <div class="app-shell">
       <div class="main-panel">
+        <main class="dashboard-grid analytics-page">
 
-        <main class="analytics-page">
+          <!-- Analytics Summary Metric Cards -->
+          <section class="summary-grid">
+            <article class="glass-card stat-card highlight">
+              <p>Total Recorded Events</p>
+              <h3 id="anTotalEvents">--</h3>
+              <span class="trend up">Cumulative Detections</span>
+            </article>
+            <article class="glass-card stat-card">
+              <p>Wildlife Incursions</p>
+              <h3 id="anWildlifeCount" style="color: var(--primary-green);">--</h3>
+              <span class="trend up">Elephant, Leopard, Boar, Deer</span>
+            </article>
+            <article class="glass-card stat-card">
+              <p>Human Intrusions</p>
+              <h3 id="anHumanCount" style="color: var(--warning-amber);">--</h3>
+              <span class="trend neutral">Discreet Audited</span>
+            </article>
+            <article class="glass-card stat-card">
+              <p>Siren Deterrence Events</p>
+              <h3 id="anSirenCount" style="color: var(--critical-red);">--</h3>
+              <span class="trend up">Acoustic Activations</span>
+            </article>
+          </section>
+
+          <!-- Timeframe Controls Bar (Module 8) -->
+          <section class="glass-card panel-card" style="padding: 14px 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <strong style="font-size: 13px; color: var(--text);">Timeframe Trend:</strong>
+                <button class="btn btn-outline btn-sm active" data-timeframe="daily" id="anTfDaily">Daily (Last 24h)</button>
+                <button class="btn btn-outline btn-sm" data-timeframe="weekly" id="anTfWeekly">Weekly (Last 7d)</button>
+                <button class="btn btn-outline btn-sm" data-timeframe="monthly" id="anTfMonthly">Monthly (Last 30d)</button>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn btn-outline btn-sm" id="anRefreshBtn">↻ Refresh Analytics</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- Analytics Visual Charts Grid -->
           <section class="analytics-grid">
+            <!-- 1. Species Distribution -->
             <article class="glass-card panel-card chart-card">
               <div class="card-heading">
                 <div>
-                  <p class="eyebrow">Species</p>
-                  <h3>Animal detections by species</h3>
+                  <p class="eyebrow">Species Breakdown</p>
+                  <h3>Animal Detections by Species</h3>
                 </div>
               </div>
               <div class="chart-bars" aria-label="Animal detections by species" data-role="analytics-species"></div>
             </article>
 
+            <!-- 2. Wildlife Intrusions Over Time -->
             <article class="glass-card panel-card chart-card">
               <div class="card-heading">
                 <div>
-                  <p class="eyebrow">Trend</p>
-                  <h3>Wildlife intrusions over time</h3>
+                  <p class="eyebrow">Trend Analysis</p>
+                  <h3>Wildlife Intrusions Over Time</h3>
                 </div>
               </div>
               <div class="line-chart" aria-label="Wildlife intrusions over time" data-role="analytics-wildlife-trend">
@@ -37,11 +79,12 @@
               </div>
             </article>
 
+            <!-- 3. Human Intrusions Over Time -->
             <article class="glass-card panel-card chart-card">
               <div class="card-heading">
                 <div>
-                  <p class="eyebrow">Trend</p>
-                  <h3>Human intrusions over time</h3>
+                  <p class="eyebrow">Security Audit</p>
+                  <h3>Human Intrusions Over Time</h3>
                 </div>
               </div>
               <div class="line-chart human-chart" aria-label="Human intrusions over time" data-role="analytics-human-trend">
@@ -51,11 +94,12 @@
               </div>
             </article>
 
+            <!-- 4. Risk Level Distribution -->
             <article class="glass-card panel-card chart-card">
               <div class="card-heading">
                 <div>
-                  <p class="eyebrow">Distribution</p>
-                  <h3>Risk-level distribution</h3>
+                  <p class="eyebrow">Risk Hierarchy</p>
+                  <h3>Risk-Level Distribution</h3>
                 </div>
               </div>
               <div class="donut-chart" aria-label="Risk-level distribution" data-role="analytics-risk-donut">
@@ -64,53 +108,59 @@
               <div class="legend-list" data-role="analytics-risk-legend"></div>
             </article>
 
+            <!-- 5. Village-wise & Zone Incident Comparison -->
             <article class="glass-card panel-card chart-card">
               <div class="card-heading">
                 <div>
-                  <p class="eyebrow">Zones</p>
-                  <h3>Most affected zones</h3>
+                  <p class="eyebrow">Settlement Comparison</p>
+                  <h3>Village & Zone Activity Comparison</h3>
                 </div>
               </div>
               <div class="zone-list" data-role="analytics-zones"></div>
             </article>
 
+            <!-- 6. Movement Trajectory -->
             <article class="glass-card panel-card chart-card">
               <div class="card-heading">
                 <div>
-                  <p class="eyebrow">Movement</p>
-                  <h3>Most common animal movement directions</h3>
+                  <p class="eyebrow">Directional Vectors</p>
+                  <h3>Most Common Trajectory Vectors</h3>
                 </div>
               </div>
               <div class="direction-list" data-role="analytics-directions"></div>
             </article>
 
+            <!-- 7. Siren Activation History -->
             <article class="glass-card panel-card chart-card">
               <div class="card-heading">
                 <div>
-                  <p class="eyebrow">Response</p>
-                  <h3>Siren activation history</h3>
+                  <p class="eyebrow">Acoustic Response</p>
+                  <h3>Siren Activation Frequency</h3>
                 </div>
               </div>
               <div class="history-bars" aria-label="Siren activation history" data-role="analytics-siren-history"></div>
             </article>
 
+            <!-- 8. Verification & Accuracy -->
             <article class="glass-card panel-card chart-card">
               <div class="card-heading">
                 <div>
-                  <p class="eyebrow">Accuracy</p>
-                  <h3>False alarm vs confirmed intrusion</h3>
+                  <p class="eyebrow">Triage Accuracy</p>
+                  <h3>Confirmed Incursions vs Low-Risk</h3>
                 </div>
               </div>
               <div class="metrics-grid" data-role="analytics-metrics"></div>
             </article>
           </section>
+
         </main>
       </div>
     </div>
 
+    <!-- Scripts -->
     <script src="config.js"></script>
-    <script src="layout.js"></script>
     <script src="api-service.js"></script>
+    <script src="layout.js"></script>
     <script src="script.js"></script>
   </body>
 </html>
