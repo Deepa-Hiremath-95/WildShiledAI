@@ -482,8 +482,46 @@
     async getMapData() {
       return this.request('/map-data');
     },
-    async getAnalytics() {
-      return this.request('/analytics');
+    _buildQuery(params = {}) {
+      const q = new URLSearchParams();
+      for (const [k, v] of Object.entries(params)) {
+        if (v !== undefined && v !== null && v !== '') {
+          q.append(k, v);
+        }
+      }
+      const s = q.toString();
+      return s ? '?' + s : '';
+    },
+    async getAnalytics(params = {}) {
+      return this.request('/analytics' + this._buildQuery(params));
+    },
+    async getAnalyticsSummary(params = {}) {
+      return this.request('/analytics/summary' + this._buildQuery(params));
+    },
+    async getVillageAnalytics(params = {}) {
+      return this.request('/analytics/villages' + this._buildQuery(params));
+    },
+    async getSpeciesAnalytics(params = {}) {
+      return this.request('/analytics/species' + this._buildQuery(params));
+    },
+    async getRiskAnalytics(params = {}) {
+      return this.request('/analytics/risk' + this._buildQuery(params));
+    },
+    async getHotspotAnalytics(params = {}) {
+      return this.request('/analytics/hotspots' + this._buildQuery(params));
+    },
+    async getHumanIntrusionAnalytics(params = {}) {
+      return this.request('/analytics/human-intrusions' + this._buildQuery(params));
+    },
+    async getCameraAnalytics(params = {}) {
+      return this.request('/analytics/cameras' + this._buildQuery(params));
+    },
+    async getAlertAnalytics(params = {}) {
+      return this.request('/analytics/alerts' + this._buildQuery(params));
+    },
+    getReportDownloadUrl(format = 'pdf', params = {}) {
+      const base = (window.WildShieldConfig && window.WildShieldConfig.API_BASE_URL) || 'http://localhost:8000/api';
+      return `${base}/analytics/reports/${format}${this._buildQuery(params)}`;
     },
     async activateSiren(sirenId) {
       return this.request(`/sirens/${sirenId}/activate`, { method: 'POST' });

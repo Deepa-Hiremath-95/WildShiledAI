@@ -1,6 +1,8 @@
+import time
+from collections import defaultdict
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
@@ -9,6 +11,12 @@ from app import models, schemas, auth
 
 router = APIRouter(tags=["auth"])
 
+# In-memory sliding-window failed login rate limiter (Item 15)
+_FAILED_LOGINS = defaultdict(list)
+MAX_FAILED_ATTEMPTS = 5
+LOCKOUT_WINDOW_SECONDS = 60
+
+
 
 @router.post("/auth/register")
 def register(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
@@ -16,10 +24,18 @@ def register(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
     if existing:
         raise HTTPException(status_code=400, detail="Username already exists")
 
+    # Item 1: Public registration cannot create administrator accounts
+    role_str = user_in.role.value if hasattr(user_in.role, "value") else str(user_in.role)
+    if role_str.lower() == "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Public registration cannot create administrator accounts",
+        )
+
     user = models.User(
         username=user_in.username,
         hashed_password=auth.hash_password(user_in.password),
-        role=user_in.role,
+        role=models.UserRole.OPERATOR,
     )
     db.add(user)
     db.commit()
@@ -27,11 +43,28 @@ def register(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
     return {"id": user.id, "username": user.username, "role": user.role}
 
 
+@router.post("/auth/token", response_model=schemas.Token)
 @router.post("/auth/login", response_model=schemas.Token)
-def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    client_ip = request.client.host if (request and request.client) else "unknown"
+    rate_key = f"{client_ip}:{form_data.username}"
+    now_ts = time.time()
+
+    # Purge attempts older than the lockout window
+    _FAILED_LOGINS[rate_key] = [t for t in _FAILED_LOGINS[rate_key] if now_ts - t < LOCKOUT_WINDOW_SECONDS]
+    if len(_FAILED_LOGINS[rate_key]) >= MAX_FAILED_ATTEMPTS:
+        raise HTTPException(
+            status_code=429,
+            detail="Too many failed login attempts. Please try again after 60 seconds.",
+        )
+
     user = db.query(models.User).filter(models.User.username == form_data.username).first()
     if not user or not auth.verify_password(form_data.password, user.hashed_password):
+        _FAILED_LOGINS[rate_key].append(now_ts)
         raise HTTPException(status_code=401, detail="Incorrect username or password")
+
+    # Reset failed attempts on successful authentication
+    _FAILED_LOGINS.pop(rate_key, None)
 
     user.last_login_at = datetime.utcnow()
     db.commit()
@@ -42,7 +75,7 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
 
 @router.get("/users/me", response_model=schemas.UserProfileOut)
 def get_current_user_profile(current_user: models.User = Depends(auth.get_current_user)):
-    return current_user
+    return schemas.UserProfileOut.model_validate(current_user)
 
 
 @router.put("/users/me", response_model=schemas.UserProfileOut)
@@ -59,13 +92,15 @@ def update_current_user_profile(
     if profile_in.location is not None:
         current_user.location = profile_in.location
     if profile_in.role is not None:
-        try:
-            current_user.role = models.UserRole(profile_in.role.lower())
-        except ValueError:
-            pass
+        current_role_val = current_user.role.value if hasattr(current_user.role, "value") else str(current_user.role)
+        if profile_in.role.lower() != current_role_val.lower():
+            raise HTTPException(
+                status_code=403,
+                detail="Privilege escalation forbidden: users cannot modify their own role",
+            )
     db.commit()
     db.refresh(current_user)
-    return current_user
+    return schemas.UserProfileOut.model_validate(current_user)
 
 
 @router.get("/security/settings", response_model=schemas.SecuritySettingsOut)

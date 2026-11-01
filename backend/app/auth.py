@@ -1,3 +1,4 @@
+import secrets
 from datetime import datetime, timedelta
 from typing import Optional
 
@@ -18,6 +19,9 @@ oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl="/api/auth/login", auto_e
 
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
+
+
+get_password_hash = hash_password
 
 
 def verify_password(plain: str, hashed: str) -> bool:
@@ -50,6 +54,12 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     user = db.query(models.User).filter(models.User.username == username).first()
     if user is None:
         raise credentials_exception
+    if not getattr(user, "is_active", True):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User account is deactivated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     return user
 
 
@@ -76,7 +86,7 @@ def get_detection_auth(
         return None
 
     if x_api_key is not None:
-        if x_api_key == settings.edge_api_key:
+        if secrets.compare_digest(x_api_key, settings.edge_api_key):
             return None
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

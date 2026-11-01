@@ -1499,41 +1499,267 @@ function renderSirenControlPage(sirens, villages, alerts) {
 /* ------------------------------------------------------------------ */
 
 function renderAnalyticsPage(analytics, detections, alerts) {
-  const totalEvents = document.getElementById('anTotalEvents');
-  const wildlifeCount = document.getElementById('anWildlifeCount');
-  const humanCount = document.getElementById('anHumanCount');
-  const sirenCount = document.getElementById('anSirenCount');
+  // Populate Village filter dropdown if not yet populated
+  const vilFilter = document.getElementById('anVillageFilter');
+  if (vilFilter && vilFilter.options.length <= 1 && currentVillages && currentVillages.length > 0) {
+    currentVillages.forEach(v => {
+      const opt = document.createElement('option');
+      opt.value = v.id;
+      opt.textContent = `${v.name}${v.code ? ' (' + v.code + ')' : ''}`;
+      vilFilter.appendChild(opt);
+    });
+  }
 
-  const detList = detections || [];
-  const humans = detList.filter(d => (d.species || '').toLowerCase() === 'human' || d.type === 'human');
-  const wildlife = detList.filter(d => (d.species || '').toLowerCase() !== 'human' && d.type !== 'human');
-  const sirensTriggered = detList.filter(d => d.sirenStatus === 'on' || d.sirenActivated).length;
+  function getActiveFilters() {
+    const filters = {};
+    const vf = document.getElementById('anVillageFilter');
+    const sf = document.getElementById('anSpeciesFilter');
+    const rf = document.getElementById('anRiskFilter');
+    const sd = document.getElementById('anStartDate');
+    const ed = document.getElementById('anEndDate');
 
-  if (totalEvents) totalEvents.textContent = detList.length;
-  if (wildlifeCount) wildlifeCount.textContent = wildlife.length;
-  if (humanCount) humanCount.textContent = humans.length;
-  if (sirenCount) sirenCount.textContent = sirensTriggered;
+    if (vf && vf.value) filters.village_id = vf.value;
+    if (sf && sf.value) filters.species = sf.value;
+    if (rf && rf.value) filters.risk_level = rf.value;
+    if (sd && sd.value) filters.start_date = sd.value;
+    if (ed && ed.value) filters.end_date = ed.value;
+    return filters;
+  }
 
-  const tfDaily = document.getElementById('anTfDaily');
-  const tfWeekly = document.getElementById('anTfWeekly');
-  const tfMonthly = document.getElementById('anTfMonthly');
+  async function loadAndRenderDetailedAnalytics(filters = {}) {
+    const loadingEl = document.getElementById('anLoadingIndicator');
+    const errorEl = document.getElementById('anErrorAlert');
+    if (loadingEl) loadingEl.style.display = 'block';
+    if (errorEl) errorEl.style.display = 'none';
 
-  [tfDaily, tfWeekly, tfMonthly].forEach(btn => {
-    if (btn && !btn._wired) {
-      btn._wired = true;
-      btn.onclick = () => {
-        [tfDaily, tfWeekly, tfMonthly].forEach(b => b?.classList.remove('active', 'btn-primary'));
-        btn.classList.add('active', 'btn-primary');
-        toast(`Analytics timeframe: ${btn.textContent}`, 'info');
-      };
+    try {
+      const [summary, villagesData, speciesData, riskData, hotspotData, humanData, camData, alertData] = await Promise.all([
+        api.getAnalyticsSummary ? api.getAnalyticsSummary(filters).catch(() => null) : Promise.resolve(null),
+        api.getVillageAnalytics ? api.getVillageAnalytics(filters).catch(() => null) : Promise.resolve(null),
+        api.getSpeciesAnalytics ? api.getSpeciesAnalytics(filters).catch(() => null) : Promise.resolve(null),
+        api.getRiskAnalytics ? api.getRiskAnalytics(filters).catch(() => null) : Promise.resolve(null),
+        api.getHotspotAnalytics ? api.getHotspotAnalytics(filters).catch(() => null) : Promise.resolve(null),
+        api.getHumanIntrusionAnalytics ? api.getHumanIntrusionAnalytics(filters).catch(() => null) : Promise.resolve(null),
+        api.getCameraAnalytics ? api.getCameraAnalytics(filters).catch(() => null) : Promise.resolve(null),
+        api.getAlertAnalytics ? api.getAlertAnalytics(filters).catch(() => null) : Promise.resolve(null),
+      ]);
+
+      // Summary KPIs
+      if (summary) {
+        const totalEvents = document.getElementById('anTotalEvents');
+        const wildlifeCount = document.getElementById('anWildlifeCount');
+        const humanCount = document.getElementById('anHumanCount');
+        const sirenCount = document.getElementById('anSirenCount');
+        if (totalEvents) totalEvents.textContent = summary.total_detections;
+        if (wildlifeCount) wildlifeCount.textContent = summary.wildlife_count;
+        if (humanCount) humanCount.textContent = summary.human_count;
+        if (sirenCount) sirenCount.textContent = summary.siren_count;
+      }
+
+      // Species Chart
+      if (speciesData && speciesData.species_analytics) {
+        const speciesBarItems = speciesData.species_analytics.map(s => ({
+          label: s.species,
+          value: s.total_detections,
+        }));
+        renderBarList(document.querySelector('[data-role="analytics-species"]'), speciesBarItems);
+      }
+
+      // Risk Donut
+      if (riskData && riskData.risk_counts) {
+        const donut = document.querySelector('[data-role="analytics-risk-donut"]');
+        const legend = document.querySelector('[data-role="analytics-risk-legend"]');
+        if (donut && legend) {
+          const rc = riskData.risk_counts;
+          const riskItems = [
+            { label: 'Low', value: rc.low || 0 },
+            { label: 'Medium', value: rc.medium || 0 },
+            { label: 'High', value: rc.high || 0 },
+            { label: 'Critical', value: rc.critical || 0 }
+          ];
+          const total = riskItems.reduce((sum, r) => sum + r.value, 0);
+          const colors = { Low: 'var(--green)', Medium: 'var(--blue)', High: 'var(--warning)', Critical: 'var(--danger)' };
+          const dotClass = { Low: 'green', Medium: 'blue', High: 'orange', Critical: 'red' };
+          let acc = 0;
+          const stops = riskItems.map((r) => {
+            const start = total ? (acc / total) * 100 : 0;
+            acc += r.value;
+            const end = total ? (acc / total) * 100 : 0;
+            return `${colors[r.label] || '#94a3b8'} ${start}% ${end}%`;
+          }).join(', ');
+          donut.style.background = total ? `conic-gradient(${stops})` : '';
+          const centerStrong = donut.querySelector('.donut-center strong');
+          if (centerStrong) centerStrong.textContent = total;
+          legend.innerHTML = riskItems.map((r) => `
+            <div><span class="legend-dot ${dotClass[r.label] || 'blue'}"></span>${r.label} <strong>${r.value}</strong></div>
+          `).join('');
+        }
+      }
+
+      // Settlements List
+      const vilListEl = document.querySelector('[data-role="analytics-villages"]') || document.querySelector('[data-role="analytics-zones"]');
+      if (vilListEl && villagesData && villagesData.villages) {
+        vilListEl.innerHTML = villagesData.villages.length
+          ? villagesData.villages.map(v => `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border);">
+              <span><strong>${escapeHtml(v.village_name)}</strong> <small style="color: var(--text-secondary);">(${v.village_code || 'VIL'})</small></span>
+              <span style="font-size: 12px;">${v.total_detections} dets | ${v.siren_deterrences} sirens</span>
+            </div>
+          `).join('')
+          : '<p class="empty-state">No settlement activity found for selected filters.</p>';
+      }
+
+      // Hotspots Ranking
+      const hotspotListEl = document.querySelector('[data-role="analytics-hotspots"]');
+      if (hotspotListEl && hotspotData && hotspotData.hotspots) {
+        hotspotListEl.innerHTML = hotspotData.hotspots.length
+          ? hotspotData.hotspots.map(h => `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border);">
+              <span><strong style="color: var(--primary-green);">#${h.rank}</strong> ${escapeHtml(h.zone_name)} <small style="color: var(--text-secondary);">(${escapeHtml(h.village_name)})</small></span>
+              <span style="font-size: 12px; font-weight: 600;">${h.detection_count} events <small style="font-weight: 400; color: var(--text-secondary);">(${escapeHtml(h.primary_species)})</small></span>
+            </div>
+          `).join('')
+          : '<p class="empty-state">No active hotspots recorded.</p>';
+      }
+
+      // Human Intrusion Audit
+      const humanContainer = document.getElementById('anHumanIntrusionContent');
+      if (humanContainer && humanData) {
+        const tp = humanData.time_based_patterns || {};
+        humanContainer.innerHTML = `
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+            <div class="metric-card" style="padding: 8px 12px; background: var(--bg-2); border-radius: var(--radius-sm);">
+              <span style="font-size: 11px; color: var(--text-secondary);">Total Intrusions</span>
+              <strong style="font-size: 18px; color: var(--text);">${humanData.total_human_detections}</strong>
+            </div>
+            <div class="metric-card" style="padding: 8px 12px; background: #FEF2F2; border-radius: var(--radius-sm);">
+              <span style="font-size: 11px; color: #991B1B;">Restricted Zone</span>
+              <strong style="font-size: 18px; color: var(--critical-red);">${humanData.restricted_zone_activity}</strong>
+            </div>
+            <div class="metric-card" style="padding: 8px 12px; background: #EFF6FF; border-radius: var(--radius-sm);">
+              <span style="font-size: 11px; color: #1E40AF;">Buffer Perimeter</span>
+              <strong style="font-size: 18px; color: var(--info-blue);">${humanData.buffer_zone_activity}</strong>
+            </div>
+          </div>
+          <div style="font-size: 11px; color: var(--text-secondary); background: var(--bg); border: 1px solid var(--border); padding: 8px 12px; border-radius: var(--radius-sm); margin-top: 4px;">
+            <strong>Temporal Pattern:</strong> Night (22-06h): <strong>${tp['night (22:00-05:59)'] || 0}</strong> | Morning: <strong>${tp['morning (06:00-11:59)'] || 0}</strong> | Afternoon: <strong>${tp['afternoon (12:00-16:59)'] || 0}</strong> | Evening: <strong>${tp['evening (17:00-21:59)'] || 0}</strong>
+          </div>
+        `;
+      }
+
+      // Camera Telemetry
+      const camContainer = document.getElementById('anCameraAnalyticsContent');
+      if (camContainer && camData) {
+        camContainer.innerHTML = `
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+            <div class="metric-card" style="padding: 8px 12px; background: #ECFDF5; border-radius: var(--radius-sm);">
+              <span style="font-size: 11px; color: #065F46;">Online Hardware</span>
+              <strong style="font-size: 16px; color: var(--primary-green);">${camData.online_count} / ${camData.total_cameras} Online</strong>
+            </div>
+            <div class="metric-card" style="padding: 8px 12px; background: var(--bg-2); border-radius: var(--radius-sm);">
+              <span style="font-size: 11px; color: var(--text-secondary);">Historical Uptime</span>
+              <strong style="font-size: 16px; color: var(--text-secondary);">Unavailable *</strong>
+            </div>
+          </div>
+          <p style="font-size: 10px; color: var(--text-secondary); margin: 4px 0 0 0; line-height: 1.3;">
+            * Historical uptime percentage is unavailable because heartbeat logs are not persisted as a time-series. Current status reflects real-time heartbeat connectivity.
+          </p>
+        `;
+      }
+
+      // Alert Resolution
+      const alertContainer = document.getElementById('anAlertResolutionContent');
+      if (alertContainer && alertData) {
+        const sd = alertData.status_distribution || {};
+        const ackStr = (alertData.time_to_acknowledge && alertData.time_to_acknowledge.avg_seconds !== null) ? `${alertData.time_to_acknowledge.avg_seconds}s` : 'No records yet';
+        const resStr = (alertData.time_to_resolve && alertData.time_to_resolve.avg_seconds !== null) ? `${alertData.time_to_resolve.avg_seconds}s` : 'No records yet';
+        alertContainer.innerHTML = `
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+            <div class="metric-card" style="padding: 8px 12px; background: #FEF2F2; border-radius: var(--radius-sm);">
+              <span style="font-size: 11px; color: #991B1B;">Active Alerts</span>
+              <strong style="font-size: 16px; color: var(--critical-red);">${sd.active || 0}</strong>
+            </div>
+            <div class="metric-card" style="padding: 8px 12px; background: #FFFBEB; border-radius: var(--radius-sm);">
+              <span style="font-size: 11px; color: #92400E;">Acknowledged</span>
+              <strong style="font-size: 16px; color: var(--warning-amber);">${sd.acknowledged || 0}</strong>
+            </div>
+            <div class="metric-card" style="padding: 8px 12px; background: #ECFDF5; border-radius: var(--radius-sm);">
+              <span style="font-size: 11px; color: #065F46;">Resolved</span>
+              <strong style="font-size: 16px; color: var(--primary-green);">${sd.resolved || 0}</strong>
+            </div>
+          </div>
+          <div style="font-size: 11px; color: var(--text-secondary); display: flex; justify-content: space-between; margin-top: 6px;">
+            <span>Avg Acknowledge Time: <strong>${ackStr}</strong></span>
+            <span>Avg Resolution Time: <strong>${resStr}</strong></span>
+          </div>
+        `;
+      }
+
+    } catch (err) {
+      console.error('Analytics load error:', err);
+      if (errorEl) {
+        errorEl.textContent = `Failed to load detailed analytics: ${err.message || err}`;
+        errorEl.style.display = 'block';
+      }
+    } finally {
+      if (loadingEl) loadingEl.style.display = 'none';
     }
-  });
+  }
+
+  // Wire buttons once
+  const applyBtn = document.getElementById('anApplyFiltersBtn');
+  if (applyBtn && !applyBtn._wired) {
+    applyBtn._wired = true;
+    applyBtn.onclick = () => {
+      const filters = getActiveFilters();
+      loadAndRenderDetailedAnalytics(filters);
+      toast('Applied operational filters', 'info');
+    };
+  }
+
+  const exportPdfBtn = document.getElementById('anExportPdfBtn');
+  if (exportPdfBtn && !exportPdfBtn._wired) {
+    exportPdfBtn._wired = true;
+    exportPdfBtn.onclick = () => {
+      const filters = getActiveFilters();
+      const url = api.getReportDownloadUrl('pdf', filters);
+      window.open(url, '_blank');
+      toast('Generating PDF Intelligence Report...', 'info');
+    };
+  }
+
+  const exportCsvBtn = document.getElementById('anExportCsvBtn');
+  if (exportCsvBtn && !exportCsvBtn._wired) {
+    exportCsvBtn._wired = true;
+    exportCsvBtn.onclick = () => {
+      const filters = getActiveFilters();
+      const url = api.getReportDownloadUrl('csv', filters);
+      window.open(url, '_blank');
+      toast('Exporting CSV Detection Records...', 'info');
+    };
+  }
 
   const refreshBtn = document.getElementById('anRefreshBtn');
   if (refreshBtn && !refreshBtn._wired) {
     refreshBtn._wired = true;
-    refreshBtn.onclick = () => hydrateDashboard();
+    refreshBtn.onclick = () => {
+      const vf = document.getElementById('anVillageFilter');
+      const sf = document.getElementById('anSpeciesFilter');
+      const rf = document.getElementById('anRiskFilter');
+      const sd = document.getElementById('anStartDate');
+      const ed = document.getElementById('anEndDate');
+      if (vf) vf.value = '';
+      if (sf) sf.value = '';
+      if (rf) rf.value = '';
+      if (sd) sd.value = '';
+      if (ed) ed.value = '';
+      loadAndRenderDetailedAnalytics({});
+      toast('Analytics filters reset', 'info');
+    };
   }
+
+  // Trigger initial detailed load
+  loadAndRenderDetailedAnalytics(getActiveFilters());
 }
 
 /* ------------------------------------------------------------------ */

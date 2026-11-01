@@ -16,6 +16,121 @@ from app import models, auth
 Base.metadata.create_all(bind=engine)
 
 
+
+def ensure_villages_and_settings(db):
+    """Ensures Village, SystemSetting, and Detection records exist and are linked."""
+    import json
+    # 1. Villages
+    vil1 = db.query(models.Village).filter(models.Village.name.like("%Village 1%")).first()
+    if not vil1:
+        vil1 = models.Village(
+            id="vil-001",
+            name="Village 1 (Kumily Fringe / Village A)",
+            code="VIL-001",
+            description="North buffer sector adjacent to Kumily Reserve border",
+            siren_pattern="pattern_1",
+            emergency_contact="+91-9876543210",
+            latitude=11.685,
+            longitude=76.620,
+            is_active=True
+        )
+        db.add(vil1)
+
+    vil2 = db.query(models.Village).filter(models.Village.name.like("%Village 2%")).first()
+    if not vil2:
+        vil2 = models.Village(
+            id="vil-002",
+            name="Village 2 (East Foothills / Village B)",
+            code="VIL-002",
+            description="East agricultural boundary and elephant corridor",
+            siren_pattern="pattern_2",
+            emergency_contact="+91-9876543211",
+            latitude=11.692,
+            longitude=76.635,
+            is_active=True
+        )
+        db.add(vil2)
+
+    vil3 = db.query(models.Village).filter(models.Village.name.like("%Core Reserve%")).first()
+    if not vil3:
+        vil3 = models.Village(
+            id="vil-003",
+            name="Core Reserve Sector (Zone C)",
+            code="VIL-003",
+            description="Strictly restricted forest interior patrol sector",
+            siren_pattern="pattern_1",
+            emergency_contact="+91-9876543212",
+            latitude=11.710,
+            longitude=76.650,
+            is_active=True
+        )
+        db.add(vil3)
+    db.flush()
+
+    # Link existing zones
+    z1 = db.query(models.Zone).filter(models.Zone.name.like("%Village 1%")).first()
+    if z1 and not z1.village_id:
+        z1.village_id = vil1.id
+    z2 = db.query(models.Zone).filter(models.Zone.name.like("%Village 2%")).first()
+    if z2 and not z2.village_id:
+        z2.village_id = vil2.id
+    z3 = db.query(models.Zone).filter(models.Zone.name.like("%Core Reserve%")).first()
+    if z3 and not z3.village_id:
+        z3.village_id = vil3.id
+
+    # Link existing cameras
+    for cam in db.query(models.Camera).all():
+        if cam.zone and cam.zone.village_id and not cam.village_id:
+            cam.village_id = cam.zone.village_id
+
+    # System Settings
+    defaults = {
+        "min_confidence": ("0.60", "Global minimum confidence floor for object detections"),
+        "animal_siren_cooldown_seconds": ("90", "Mandatory acoustic cooldown window after animal siren playback"),
+        "human_notification_cooldown_seconds": ("10", "Duplicate suppression window for human intrusion notifications"),
+        "duplicate_detection_window_seconds": ("10", "Duplicate suppression window for same-track detections"),
+        "siren_duration_seconds": ("45", "Acoustic siren playback duration in seconds"),
+        "excluded_species": (json.dumps(["peacock"]), "List of wildlife species excluded from triggering conflict alerts"),
+        "monitoring_preferences": (json.dumps({
+            "audio_alerts": True,
+            "auto_resolve_after_hours": 24,
+            "human_intrusion_priority": "high",
+            "enforce_village_camera_binding": True
+        }), "Operational monitoring rules and dashboard preference toggles")
+    }
+
+    for key, (val, desc) in defaults.items():
+        existing = db.query(models.SystemSetting).filter(models.SystemSetting.key == key).first()
+        if not existing:
+            setting = models.SystemSetting(key=key, value=val, description=desc)
+            db.add(setting)
+
+    # Backfill Detections from Alerts if empty
+    if db.query(models.Detection).count() == 0:
+        alerts = db.query(models.Alert).all()
+        for a in alerts:
+            det = models.Detection(
+                id="det-" + a.id,
+                camera_id=a.camera_id,
+                zone_id=a.zone_id,
+                village_id=a.zone.village_id if a.zone else None,
+                event_type=a.event_type,
+                species=a.species,
+                confidence=a.confidence,
+                movement_direction=a.movement_direction,
+                boundary_crossing=a.boundary_crossing,
+                risk_level=a.risk_level,
+                action_taken="Village siren activated" if a.siren_activated else "Human notification logged",
+                siren_triggered=a.siren_activated,
+                snapshot_path=a.snapshot_path,
+                alert_id=a.id,
+                created_at=a.created_at
+            )
+            db.add(det)
+
+    db.commit()
+
+
 def run(reset: bool = False):
     db = SessionLocal()
     try:
@@ -27,7 +142,8 @@ def run(reset: bool = False):
         # Check if already seeded
         existing_zone = db.query(models.Zone).first()
         if existing_zone and db.query(models.Alert).first():
-            print("Database already has data and alerts — skipping seed.")
+            ensure_villages_and_settings(db)
+            print("Database already has data and alerts — ensured villages and settings.")
             return
 
         now = datetime.utcnow()

@@ -23,6 +23,8 @@ class Settings(BaseSettings):
     default_cooldown_seconds: int = 90
     default_siren_duration_seconds: int = 45
 
+    environment: str = "development"  # development | production | testing
+    enforce_ws_auth: bool = False     # require authentication for WebSocket connections
     edge_api_key: str = ""  # optional API key for edge device /api/detections ingestion (default empty = open)
 
     cors_origins: Union[list[str], str] = [

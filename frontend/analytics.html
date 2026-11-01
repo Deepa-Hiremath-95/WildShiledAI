@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Analytics & Operational Trends | WildShield AI</title>
-    <meta name="description" content="Wildlife intrusion detection statistics, human activity trends, risk distribution, and siren metrics." />
+    <meta name="description" content="Wildlife intrusion detection statistics, human activity trends, risk distribution, hotspot analysis, and operational reporting." />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -27,7 +27,7 @@
             <article class="glass-card stat-card">
               <p>Human Intrusions</p>
               <h3 id="anHumanCount" style="color: var(--warning-amber);">--</h3>
-              <span class="trend neutral">Discreet Audited</span>
+              <span class="trend neutral">Discreet Audited (No Siren)</span>
             </article>
             <article class="glass-card stat-card">
               <p>Siren Deterrence Events</p>
@@ -36,24 +36,63 @@
             </article>
           </section>
 
-          <!-- Timeframe Controls Bar (Module 8) -->
-          <section class="glass-card panel-card" style="padding: 14px 20px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-              <div style="display: flex; gap: 8px; align-items: center;">
-                <strong style="font-size: 13px; color: var(--text);">Timeframe Trend:</strong>
-                <button class="btn btn-outline btn-sm active" data-timeframe="daily" id="anTfDaily">Daily (Last 24h)</button>
-                <button class="btn btn-outline btn-sm" data-timeframe="weekly" id="anTfWeekly">Weekly (Last 7d)</button>
-                <button class="btn btn-outline btn-sm" data-timeframe="monthly" id="anTfMonthly">Monthly (Last 30d)</button>
+          <!-- Operational Intelligence Controls & Filter Bar -->
+          <section class="glass-card panel-card" style="padding: 16px 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+              <!-- Filters -->
+              <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                <strong style="font-size: 13px; color: var(--text);">Filters:</strong>
+                
+                <select id="anVillageFilter" style="font-size: 12px; padding: 6px 10px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg); color: var(--text);">
+                  <option value="">All Settlements</option>
+                </select>
+
+                <select id="anSpeciesFilter" style="font-size: 12px; padding: 6px 10px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg); color: var(--text);">
+                  <option value="">All Species</option>
+                  <option value="Elephant">Elephant</option>
+                  <option value="Leopard">Leopard</option>
+                  <option value="Deer">Deer</option>
+                  <option value="Wild Boar">Wild Boar</option>
+                  <option value="Human">Human</option>
+                </select>
+
+                <select id="anRiskFilter" style="font-size: 12px; padding: 6px 10px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg); color: var(--text);">
+                  <option value="">All Risk Levels</option>
+                  <option value="critical">Critical</option>
+                  <option value="high">High</option>
+                  <option value="medium">Medium</option>
+                  <option value="low">Low</option>
+                </select>
+
+                <div style="display: flex; gap: 4px; align-items: center;">
+                  <span style="font-size: 11px; color: var(--text-secondary);">From:</span>
+                  <input type="date" id="anStartDate" style="font-size: 12px; padding: 5px 8px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg); color: var(--text);" />
+                  <span style="font-size: 11px; color: var(--text-secondary);">To:</span>
+                  <input type="date" id="anEndDate" style="font-size: 12px; padding: 5px 8px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg); color: var(--text);" />
+                </div>
+
+                <button class="btn btn-primary btn-sm" id="anApplyFiltersBtn">↻ Apply Filters</button>
               </div>
-              <div style="display: flex; gap: 8px;">
-                <button class="btn btn-outline btn-sm" id="anRefreshBtn">↻ Refresh Analytics</button>
+
+              <!-- Export Controls -->
+              <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                <button class="btn btn-outline btn-sm" id="anExportPdfBtn" style="color: #065F46; border-color: #059669;">📄 Export PDF Report</button>
+                <button class="btn btn-outline btn-sm" id="anExportCsvBtn" style="color: #1E40AF; border-color: #2563EB;">📊 Export CSV</button>
+                <button class="btn btn-outline btn-sm" id="anRefreshBtn">↻ Reset / Reload</button>
               </div>
+            </div>
+
+            <!-- Loading & Error Indicators -->
+            <div id="anLoadingIndicator" style="display: none; padding: 10px; background: #ECFDF5; border: 1px solid #A7F3D0; color: #065F46; border-radius: var(--radius-sm); font-size: 13px; text-align: center; margin-top: 12px;">
+              ⏳ Loading real-time database analytics...
+            </div>
+            <div id="anErrorAlert" style="display: none; padding: 10px; background: #FEF2F2; border: 1px solid #FECACA; color: #991B1B; border-radius: var(--radius-sm); font-size: 13px; margin-top: 12px;">
             </div>
           </section>
 
           <!-- Analytics Visual Charts Grid -->
           <section class="analytics-grid">
-            <!-- 1. Species Distribution -->
+            <!-- 1. Species Breakdown (Task 2) -->
             <article class="glass-card panel-card chart-card">
               <div class="card-heading">
                 <div>
@@ -79,7 +118,7 @@
               </div>
             </article>
 
-            <!-- 3. Human Intrusions Over Time -->
+            <!-- 3. Human Intrusions Over Time (Task 5) -->
             <article class="glass-card panel-card chart-card">
               <div class="card-heading">
                 <div>
@@ -94,43 +133,91 @@
               </div>
             </article>
 
-            <!-- 4. Risk Level Distribution -->
+            <!-- 4. Risk Level Distribution (Task 3) -->
             <article class="glass-card panel-card chart-card">
               <div class="card-heading">
                 <div>
-                  <p class="eyebrow">Risk Hierarchy</p>
+                  <p class="eyebrow">Risk Hierarchy (Heuristic)</p>
                   <h3>Risk-Level Distribution</h3>
                 </div>
+                <span style="font-size: 10px; background: #F1F5F9; color: #475569; padding: 2px 6px; border-radius: 4px; border: 1px solid #CBD5E1;" title="Rule-based heuristic; not predictive">Heuristic Engine</span>
               </div>
               <div class="donut-chart" aria-label="Risk-level distribution" data-role="analytics-risk-donut">
                 <div class="donut-center"><strong>--</strong><span>Total alerts</span></div>
               </div>
               <div class="legend-list" data-role="analytics-risk-legend"></div>
+              <p style="font-size: 10.5px; color: var(--text-secondary); text-align: center; margin-top: 10px;">
+                * Risk classification derived from rule-based heuristic calculations. Uncalibrated for predictive statistical outcomes.
+              </p>
             </article>
 
-            <!-- 5. Village-wise & Zone Incident Comparison -->
+            <!-- 5. Settlement Activity Comparison (Task 1) -->
             <article class="glass-card panel-card chart-card">
               <div class="card-heading">
                 <div>
                   <p class="eyebrow">Settlement Comparison</p>
-                  <h3>Village & Zone Activity Comparison</h3>
+                  <h3>Village & Settlement Activity</h3>
                 </div>
               </div>
-              <div class="zone-list" data-role="analytics-zones"></div>
+              <div class="zone-list" data-role="analytics-villages"></div>
             </article>
 
-            <!-- 6. Movement Trajectory -->
+            <!-- 6. Hotspot Monitoring Zones (Task 4) -->
             <article class="glass-card panel-card chart-card">
               <div class="card-heading">
                 <div>
-                  <p class="eyebrow">Directional Vectors</p>
-                  <h3>Most Common Trajectory Vectors</h3>
+                  <p class="eyebrow">Activity Ranking</p>
+                  <h3>Monitoring Zone Hotspots</h3>
                 </div>
+                <span style="font-size: 10px; background: #F1F5F9; color: #475569; padding: 2px 6px; border-radius: 4px; border: 1px solid #CBD5E1;">Descriptive</span>
               </div>
-              <div class="direction-list" data-role="analytics-directions"></div>
+              <div class="zone-list" data-role="analytics-hotspots"></div>
+              <p style="font-size: 10.5px; color: var(--text-secondary); margin-top: 8px;">
+                * Descriptive trigger ranking only. Does not represent predictive spatial density or GPS animal telemetry.
+              </p>
             </article>
 
-            <!-- 7. Siren Activation History -->
+            <!-- 7. Human Intrusion Compliance Audit (Task 5) -->
+            <article class="glass-card panel-card chart-card">
+              <div class="card-heading">
+                <div>
+                  <p class="eyebrow">Personnel Safety & Protocol</p>
+                  <h3>Human Intrusion Audit</h3>
+                </div>
+                <span style="font-size: 10px; background: #ECFDF5; color: #047857; padding: 2px 6px; border-radius: 4px; border: 1px solid #A7F3D0; font-weight: 600;">Siren Inactive (0)</span>
+              </div>
+              <div id="anHumanIntrusionContent" style="display: flex; flex-direction: column; gap: 10px; padding: 8px 0;">
+                <!-- Dynamically rendered -->
+              </div>
+            </article>
+
+            <!-- 8. Camera Operational Analytics (Task 6) -->
+            <article class="glass-card panel-card chart-card">
+              <div class="card-heading">
+                <div>
+                  <p class="eyebrow">Hardware Telemetry</p>
+                  <h3>Camera Network & Telemetry</h3>
+                </div>
+              </div>
+              <div id="anCameraAnalyticsContent" style="display: flex; flex-direction: column; gap: 8px; padding: 8px 0;">
+                <!-- Dynamically rendered -->
+              </div>
+            </article>
+
+            <!-- 9. Alert Resolution Performance (Task 7) -->
+            <article class="glass-card panel-card chart-card">
+              <div class="card-heading">
+                <div>
+                  <p class="eyebrow">Operational Readiness</p>
+                  <h3>Alert Resolution Metrics</h3>
+                </div>
+              </div>
+              <div id="anAlertResolutionContent" style="display: flex; flex-direction: column; gap: 8px; padding: 8px 0;">
+                <!-- Dynamically rendered -->
+              </div>
+            </article>
+
+            <!-- 10. Siren Deterrence History -->
             <article class="glass-card panel-card chart-card">
               <div class="card-heading">
                 <div>
@@ -139,17 +226,6 @@
                 </div>
               </div>
               <div class="history-bars" aria-label="Siren activation history" data-role="analytics-siren-history"></div>
-            </article>
-
-            <!-- 8. Verification & Accuracy -->
-            <article class="glass-card panel-card chart-card">
-              <div class="card-heading">
-                <div>
-                  <p class="eyebrow">Triage Accuracy</p>
-                  <h3>Confirmed Incursions vs Low-Risk</h3>
-                </div>
-              </div>
-              <div class="metrics-grid" data-role="analytics-metrics"></div>
             </article>
           </section>
 
